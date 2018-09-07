@@ -1,0 +1,2 @@
+# Redirect default Netlify subdomain to primary domain
+https://cloudtestament.netlify.com/* https://www.cloudtestament.com/:splat 301!
