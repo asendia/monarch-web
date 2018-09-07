@@ -16,7 +16,7 @@ class App extends Component {
           <h1 className="App-title">Welcome to cloudtestament</h1>
         </header>
         <p className="App-intro">
-          <a href="#" onClick={}>Register.</a>
+          <button onClick={this.handleRegister}>Register.</button>
         </p>
         <p className="App-intro">
           It is still WIP, visit <a href="https://www.fjbgame.com/contact">fjbgame</a> if you want to contact me.
