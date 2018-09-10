@@ -19,7 +19,8 @@ class CheckAuth extends React.Component {
       const headers = await this.generateHeaders(this.props.netlifyIdentity);
       const res = await axios.post(
         'https://0r5xr9d88a.execute-api.ap-southeast-1.amazonaws.com/default/monarchUpsert',
-        headers,
+        {},
+        { headers },
       );
       console.log(res);
       this.setState({ text: `welcome, ${res.user_metadata.full_name}` });
