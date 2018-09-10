@@ -47,7 +47,7 @@ class Forms extends React.Component {
     forms: {
       emails: '',
       message: '',
-      silentPeriod: 6,
+      silentPeriod: 180,
       reminderInterval: 30,
       isActive: false,
     },
