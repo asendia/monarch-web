@@ -26,6 +26,7 @@ class CheckAuth extends React.Component {
       this.setState({ text: `welcome, ${res.data.user_metadata.full_name}` });
     } catch (err) {
       console.error(err);
+      this.props.netlifyIdentity.logout();
       this.setState({ text: 'failed to authorize' });
     }
   }
