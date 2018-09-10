@@ -1,4 +1,14 @@
 import React from 'react';
+import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles';
+
+
+const styles = (theme) => ({
+  button: {
+    margin: theme.spacing.unit,
+    marginTop: 20,
+  },
+});
 
 class LoginButton extends React.Component {
   state = {
@@ -25,12 +35,29 @@ class LoginButton extends React.Component {
     this.props.netlifyIdentity.logout();
   }
   render() {
-    return this.state.isLoading ?
-      <button disabled>loading...</button> :
+    const { classes } = this.props;
+    return (
       this.props.netlifyIdentity.currentUser() ?
-      <button onClick={this.handleLogout}>logout</button> :
-      <button onClick={this.handleLogin}>login</button>;
+      <Button 
+        onClick={this.handleLogout}
+        variant='contained'
+        color='secondary'
+        className={classes.button}
+        disabled={this.state.isLoading}
+      >
+        logout
+      </Button> :
+      <Button 
+        onClick={this.handleLogin}
+        variant='contained'
+        color='primary'
+        className={classes.button}
+        disabled={this.state.isLoading}
+      >
+        login
+      </Button>
+    );
   }
 }
 
-export default LoginButton;
+export default withStyles(styles)(LoginButton);

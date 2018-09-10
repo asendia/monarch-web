@@ -1,34 +1,29 @@
 import React from 'react';
 import axios from 'axios';
+import { generateHeaders } from '../ApiCalls';
 
 class CheckAuth extends React.Component {
   state = {
     text: '',
   };
-  generateHeaders = async (netlifyIdentity) => {
-    const headers = { 'Content-Type': 'application/json' };
-    if (netlifyIdentity && netlifyIdentity.currentUser()) {
-      const token = await netlifyIdentity.currentUser().jwt();
-      return { ...headers, Authorization: `Bearer ${token}` };
-    }
-    return headers;
-  }
   handleClick = async () => {
     this.setState({ text: 'loading...' });
     try {
-      const headers = await this.generateHeaders(this.props.netlifyIdentity);
-      const res = await axios.post(
-        'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/test-path',
-        {},
-        { headers },
+      const headers = await generateHeaders(this.props.netlifyIdentity);
+      await axios.post(
+        'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/test-auth',
+        null, { headers },
       );
-      console.log(res);
-      this.setState({ text: `welcome, ${res.data.user_metadata.full_name}` });
     } catch (err) {
       console.error(err);
       this.props.netlifyIdentity.logout();
-      this.setState({ text: 'failed to authorize' });
+      return this.setState({ text: 'failed to authorize' });
     }
+    const user = this.props.netlifyIdentity.currentUser();
+    const name = user && ((user.user_metadata && user.user_metadata.full_name) ||
+      user.email);
+    const text = name ? `welcome, ${name}` : '';
+    this.setState({ text });
   }
   render() {
     return (
