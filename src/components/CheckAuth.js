@@ -23,7 +23,7 @@ class CheckAuth extends React.Component {
         { headers },
       );
       console.log(res);
-      this.setState({ text: `welcome, ${res.user_metadata.full_name}` });
+      this.setState({ text: `welcome, ${res.data.user_metadata.full_name}` });
     } catch (err) {
       console.error(err);
       this.setState({ text: 'failed to authorize' });
