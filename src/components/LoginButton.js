@@ -16,7 +16,7 @@ class LoginButton extends React.Component {
       this.setState({ isLoading: false });
     });
   }
-  handleRegister = () => {
+  handleLogin = () => {
     this.setState({ isLoading: true });
     this.props.netlifyIdentity.open('login');
   }
@@ -29,7 +29,7 @@ class LoginButton extends React.Component {
       <button disabled>loading...</button> :
       this.props.netlifyIdentity.currentUser() ?
       <button onClick={this.handleLogout}>logout</button> :
-      <button onClick={this.handleRegister}>login</button>;
+      <button onClick={this.handleLogin}>login</button>;
   }
 }
 

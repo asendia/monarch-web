@@ -3,6 +3,7 @@ import netlifyIdentity from 'netlify-identity-widget';
 import Header from './components/Header';
 import LoginButton from './components/LoginButton';
 import './App.css';
+import CheckAuth from './components/CheckAuth';
 
 netlifyIdentity.init({
   container: '#netlify-modal' // defaults to document.body,
@@ -14,7 +15,8 @@ class App extends Component {
       <div className='App'>
         <Header />
         <p className='App-intro'>
-        <LoginButton netlifyIdentity={netlifyIdentity} />
+          <LoginButton netlifyIdentity={netlifyIdentity} />
+          <CheckAuth netlifyIdentity={netlifyIdentity} />
         </p>
         <p className='App-intro'>
           It is still WIP, visit <a href='https://www.fjbgame.com/contact'>fjbgame</a> if you want to contact me.
