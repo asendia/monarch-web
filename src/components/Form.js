@@ -54,13 +54,16 @@ class Form extends React.Component {
       window.sessionStorage.removeItem('cloudtestament.form');
     }
   }
-  handleChange = (key) => (event) => {
+  handleChangeValue = (key, value) => {
     this.setState({
       form: {
         ...this.state.form,
-        [key]: event.target.value,
+        [key]: value,
       },
     });
+  }
+  handleChangeText = (key) => (event) => {
+    this.handleChangeValue(key, event.target.value);
     if (key === 'message') {
       this.setState({
         validation: {
@@ -70,6 +73,10 @@ class Form extends React.Component {
         },
       });
     }
+    this.saveToSessionStorage();
+  }
+  handleChangeSelect = (key) => (event) => {
+    this.handleChangeValue(key, parseInt(event.target.value, 10));
     this.saveToSessionStorage();
   }
   // Cron activation
@@ -185,7 +192,7 @@ class Form extends React.Component {
           value={this.state.form.emails}
           error={this.state.validation.emails !== ''}
           helperText={this.state.validation.emails}
-          onChange={this.handleChange('emails')}
+          onChange={this.handleChangeText('emails')}
           margin='normal'
         />
         <TextField
@@ -195,7 +202,7 @@ class Form extends React.Component {
           value={this.state.form.message}
           error={this.state.validation.messageError}
           helperText={this.state.validation.message}
-          onChange={this.handleChange('message')}
+          onChange={this.handleChangeText('message')}
           multiline
           rowsMax='20'
           margin='normal'
@@ -208,7 +215,7 @@ class Form extends React.Component {
             className={classes.selectEmpty}
             value={this.state.form.silentPeriod}
             name='input-silent-period'
-            onChange={this.handleChange('silentPeriod')}
+            onChange={this.handleChangeSelect('silentPeriod')}
           >
             <option value={90}>After 3 months</option>
             <option value={180}>After 6 months</option>
@@ -224,7 +231,7 @@ class Form extends React.Component {
             className={classes.selectEmpty}
             value={this.state.form.reminderInterval}
             name='input-reminder-interval'
-            onChange={this.handleChange('reminderInterval')}
+            onChange={this.handleChangeSelect('reminderInterval')}
           >
             <option value={15}>Every 15 days</option>
             <option value={30}>Every 30 days</option>
