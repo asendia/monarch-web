@@ -190,7 +190,7 @@ class Form extends React.Component {
     const { classes } = this.props;
     let email = 'your email';
     try {
-      email = his.props.netlifyIdentity.currentUser().email;
+      email = this.props.netlifyIdentity.currentUser().email;
     } catch (err) {}
     return (
       <form className={classes.container} onSubmit={this.handleSubmit}>
