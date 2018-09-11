@@ -28,7 +28,7 @@ class App extends Component {
   render() {
     return (
       <div className='App'>
-        <Header />
+        <Header netlifyIdentity={netlifyIdentity} />
         <div className='App-intro'>
           <LoginButton netlifyIdentity={netlifyIdentity} />
           <div style={{ borderTop: '1px grey solid', margin: 20 }} />

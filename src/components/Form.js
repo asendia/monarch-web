@@ -188,6 +188,10 @@ class Form extends React.Component {
   }
   render() {
     const { classes } = this.props;
+    let email = 'your email';
+    try {
+      email = his.props.netlifyIdentity.currentUser().email;
+    } catch (err) {}
     return (
       <form className={classes.container} onSubmit={this.handleSubmit}>
         <TextField
@@ -241,7 +245,7 @@ class Form extends React.Component {
             <option value={15}>Every 15 days</option>
             <option value={30}>Every 30 days</option>
           </NativeSelect>
-          <FormHelperText>Time interval in which an email will be sent to your email with instructions to reset your silent period</FormHelperText>
+          <FormHelperText>Time interval in which an email will be sent to {email} with instructions to reset your silent period</FormHelperText>
         </FormControl>
         <FormControlLabel
           control={
