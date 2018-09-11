@@ -97,9 +97,9 @@ class Form extends React.Component {
 
     const emails = this.state.form.emails.replace(/ /g, '').split(',').filter(email => {
       return validateEmail(email);
-    }).join(',');
+    });
     const message = this.state.form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
-    const isEmailValid = emails.length > 0 && emails <= 3;
+    const isEmailValid = emails.length > 0 && emails.length <= 3;
     const isMessageValid = validateMessage(message);
     this.setState({
       validation: {
@@ -133,7 +133,11 @@ class Form extends React.Component {
       const headers = await generateHeaders(this.props.netlifyIdentity);
       await axios.post(
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
-        this.state.form, { headers },
+        {
+          ...this.state.form,
+          emails: emails.join(', '),
+        },
+        { headers },
       );
       this.openDialogAfterSubmit();
     } catch (err) {
