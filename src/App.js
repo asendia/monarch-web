@@ -16,9 +16,10 @@ class App extends Component {
   async componentDidMount() {
     const mode = getParameterByName('mode');
     const token = getParameterByName('token');
+    const id = getParameterByName('id');
     if (token && mode && token.length >= 128 && mode === 'protract') {
       try {
-        await protractTestament(token, netlifyIdentity);
+        await protractTestament(id, token);
         window.alert('Protraction success!');
       } catch (err) {}
       window.location.replace('/');

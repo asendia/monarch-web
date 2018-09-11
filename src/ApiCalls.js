@@ -9,11 +9,11 @@ export const generateHeaders = async function generateHeaders(netlifyIdentity) {
   return headers;
 }
 
-export const protractTestament = async function protractTestament(token, netlifyIdentity) {
-  const headers = generateHeaders(netlifyIdentity);
-  const res = await axios.get(
-    `https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/protract?token=${token}`,
-    { headers }
+export const protractTestament = async function protractTestament(id, token) {
+  const res = await axios.post(
+    `https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/protract`,
+    { id, token },
+    { 'Content-Type': 'application/json' }
   );
   return res;
 }
