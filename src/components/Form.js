@@ -197,6 +197,7 @@ class Form extends React.Component {
         <TextField
           id='emails'
           label='Target emails, separated by comma (,)'
+          autoComplete='off'
           className={classes.textField}
           value={this.state.form.emails}
           error={this.state.validation.emails !== ''}
@@ -207,6 +208,7 @@ class Form extends React.Component {
         <TextField
           id='message'
           label='Message, better write it first in notepad'
+          autoComplete='off'
           className={classes.textField}
           value={this.state.form.message}
           error={this.state.validation.messageError}
