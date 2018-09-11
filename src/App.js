@@ -17,7 +17,7 @@ class App extends Component {
     const mode = getParameterByName('mode');
     const token = getParameterByName('token');
     const id = getParameterByName('id');
-    if (token && mode && token.length >= 128 && mode === 'protract') {
+    if (token && mode && id && token.length >= 128 && mode === 'protract') {
       try {
         await protractTestament(id, token);
         window.alert('Protraction success!');
