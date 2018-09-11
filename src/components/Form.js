@@ -99,16 +99,17 @@ class Form extends React.Component {
       return validateEmail(email);
     }).join(',');
     const message = this.state.form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
-    const isEmailValid = emails.length === 0 || emails > 3;
+    const isEmailValid = emails.length > 0 && emails <= 3;
+    const isMessageValid = validateMessage(message);
     this.setState({
       validation: {
         emails: isEmailValid ?
-          `email list are too ${emails.length > 3 ? 'long' : 'short'}, should be at least 1 and no more than 3.` :
-          '',
-        message: isMessageValid(message) ?
-          `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}` :
-          '',
-        messageError: isMessageValid(message),
+          '' :
+          `email list are too ${emails.length > 3 ? 'long' : 'short'}, should be at least 1 and no more than 3.`,
+        message: isMessageValid ?
+          '' :
+          `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
+        messageError: isMessageValid,
       },
     });
   
@@ -269,7 +270,7 @@ class Form extends React.Component {
 
 export default withStyles(styles)(Form);
 
-function isMessageValid(message) {
+function validateMessage(message) {
   return message.length < 10 || message.length > 800;
 }
 
