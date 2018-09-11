@@ -31,7 +31,7 @@ class App extends Component {
         <Header netlifyIdentity={netlifyIdentity} />
         <div className='App-intro'>
           <LoginButton netlifyIdentity={netlifyIdentity} />
-          <div style={{ borderTop: '1px grey solid', margin: 20 }} />
+          <div style={{ borderTop: '1px grey solid', margin: '8px' }} />
           <Form netlifyIdentity={netlifyIdentity} />
         </div>
         <Footer />
