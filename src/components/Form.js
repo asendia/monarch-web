@@ -107,9 +107,9 @@ class Form extends React.Component {
           '' :
           `email list are too ${emails.length > 3 ? 'long' : 'short'}, should be at least 1 and no more than 3.`,
         message: isMessageValid ?
-          '' :
+          `${message.length}/800` :
           `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
-        messageError: isMessageValid,
+        messageError: !isMessageValid,
       },
     });
   
