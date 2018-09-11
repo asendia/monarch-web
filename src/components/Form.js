@@ -11,40 +11,12 @@ import { withStyles } from '@material-ui/core/styles';
 import axios from 'axios';
 import { generateHeaders } from '../ApiCalls';
 import DialogBox from './DialogBox';
+import styles from './Form.styles';
+import debounce from 'debounce';
 
-const styles = theme => ({
-  container: {
-    maxWidth: '500px',
-    margin: '10px auto',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  textField: {
-    marginTop: 0,
-    marginBottom: 10,
-    marginLeft: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
-    minWidth: 120,
-    overflow: 'hidden',
-  },
-  formControl: {
-    margin: theme.spacing.unit,
-    minWidth: 120,
-  },
-  selectEmpty: {
-    marginTop: theme.spacing.unit * 2,
-  },
-  button: {
-    margin: theme.spacing.unit,
-  },
-  switch: {
-    margin: 'auto',
-  },
-});
-
-class Forms extends React.Component {
+class Form extends React.Component {
   state = {
-    forms: {
+    form: {
       emails: '',
       message: '',
       silentPeriod: 180,
@@ -56,57 +28,97 @@ class Forms extends React.Component {
       title: '',
       text: '',
     },
+    validation: {
+      emails: '',
+      message: '',
+    },
+  }
+  saveToSessionStorage = debounce(() => {
+    if (!window.sessionStorage) {
+      return;
+    }
+    window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(this.state.form));
+  }, 500)
+  loadFromSessionStorage = () => {
+    if (!window.sessionStorage) {
+      return;
+    }
+    try {
+      const form = JSON.parse(window.sessionStorage.getItem('cloudtestament.form'));
+      this.setState({ form });
+    }
+    catch (err) {}
   }
   handleChange = (key) => (event) => {
     this.setState({
-      forms: {
-        ...this.state.forms,
+      form: {
+        ...this.state.form,
         [key]: event.target.value,
       },
     });
+    if (key === 'message') {
+      this.setState({
+        validation: {
+          ...this.state.validation,
+          message: `${event.target.value.length}/800`,
+          messageError: isMessageValid(event.target.value.length)
+        },
+      });
+    }
+    this.saveToSessionStorage();
   }
-  handleActivate = (event) => {
+  // Cron activation
+  handleActivationToggle = (event) => {
     if (!this.props.netlifyIdentity.currentUser()) {
       return this.openDialogInviteRegister();
     }
     this.setState({
-      forms: {
-        ...this.state.forms,
+      form: {
+        ...this.state.form,
         isActive: event.target.checked,
       },
     });
+    this.saveToSessionStorage();
   }
   handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!this.props.netlifyIdentity.currentUser()) {
-      return this.openDialogInviteRegister();
-    }
-    const emails = this.state.forms.emails.replace(/ /g, '').split(',').filter(email => {
+    const emails = this.state.form.emails.replace(/ /g, '').split(',').filter(email => {
       return validateEmail(email);
     }).join(',');
-    if (emails.length === 0) {
-      return console.log('email invalid');
-    }
-    const message = this.state.forms.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');;
-    if (message.length < 10 || message.length > 800) {
-      return console.log(`message too ${message.length < 10 ? 'short' : 'long'}`);
-    }
+    const message = this.state.form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
     this.setState({
-      forms: {
-        ...this.state.forms,
-        emails,
+      validation: {
+        emails: emails.length === 0 || emails > 3 ?
+          `email list are too ${emails.length > 3 ? 'long' : 'short'}, should be at least 1 and no more than 3.` :
+          '',
+        message: isMessageValid(message) ?
+          `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}` :
+          '',
+        messageError: isMessageValid(message),
+      },
+    });
+  
+    this.setState({
+      form: {
+        ...this.state.form,
         message,
       },
     });
+    this.saveToSessionStorage();
+  
+    if (!this.props.netlifyIdentity.currentUser()) {
+      return this.openDialogInviteRegister();
+    }
 
     // Submit form
     try {
       const headers = await generateHeaders(this.props.netlifyIdentity);
       await axios.post(
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
-        this.state.forms, { headers },
+        this.state.form, { headers },
       );
+      this.openDialogAfterSubmit();
     } catch (err) {
       console.error(err);
     }
@@ -115,16 +127,27 @@ class Forms extends React.Component {
     this.setState({ dialog: { title: '', open: false } });
   }
   openDialogInviteRegister = () => {
+    this.saveToSessionStorage();
     this.setState({
       dialog: {
         open: true,
-        title: 'Please register',
+        title: 'Please login',
         description: 'You must login first in order to try cloudtestament',
+      },
+    })
+  }
+  openDialogAfterSubmit = () => {
+    this.setState({
+      dialog: {
+        open: true,
+        title: 'Submission complete',
+        description: 'Your testament has been submitted',
       },
     })
   }
   async componentDidMount() {
     if (!this.props.netlifyIdentity.currentUser()) {
+      this.loadFromSessionStorage();
       return;
     }
     try {
@@ -133,32 +156,23 @@ class Forms extends React.Component {
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/retrieve',
         { headers },
       );
-      this.setState({ forms: res.data });
+      this.setState({ form: res.data });
     } catch (err) {
       console.error(err);
+      this.loadFromSessionStorage();
     }
   }
   render() {
     const { classes } = this.props;
     return (
       <form className={classes.container} onSubmit={this.handleSubmit}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={this.state.forms.isActive}
-              onChange={this.handleActivate}
-              value=''
-              color='primary'
-            />
-          }
-          className={classes.switch}
-          label='Activate'
-        />
         <TextField
           id='emails'
-          label='Target emails'
+          label='Target emails, separated by comma (,)'
           className={classes.textField}
-          value={this.state.forms.emails}
+          value={this.state.form.emails}
+          error={this.state.validation.emails !== ''}
+          helperText={this.state.validation.emails}
           onChange={this.handleChange('emails')}
           margin='normal'
         />
@@ -166,7 +180,9 @@ class Forms extends React.Component {
           id='message'
           label='Message, better write it first in notepad'
           className={classes.textField}
-          value={this.state.forms.message}
+          value={this.state.form.message}
+          error={this.state.validation.messageError}
+          helperText={this.state.validation.message}
           onChange={this.handleChange('message')}
           multiline
           rowsMax='20'
@@ -178,7 +194,7 @@ class Forms extends React.Component {
           </InputLabel>
           <NativeSelect
             className={classes.selectEmpty}
-            value={this.state.forms.silentPeriod}
+            value={this.state.form.silentPeriod}
             name='input-silent-period'
             onChange={this.handleChange('silentPeriod')}
           >
@@ -194,7 +210,7 @@ class Forms extends React.Component {
           </InputLabel>
           <NativeSelect
             className={classes.selectEmpty}
-            value={this.state.forms.reminderInterval}
+            value={this.state.form.reminderInterval}
             name='input-reminder-interval'
             onChange={this.handleChange('reminderInterval')}
           >
@@ -203,6 +219,18 @@ class Forms extends React.Component {
           </NativeSelect>
           <FormHelperText>Time interval in which an email will be sent to your email with instructions to reset your silent period</FormHelperText>
         </FormControl>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={this.state.form.isActive}
+              onChange={this.handleActivationToggle}
+              value=''
+              color='primary'
+            />
+          }
+          className={classes.switch}
+          label='Activate'
+        />
         <Button
           onClick={this.handleSubmit}
           variant='contained'
@@ -213,13 +241,18 @@ class Forms extends React.Component {
         </Button>
         <DialogBox
           dialog={this.state.dialog}
-          onClose={this.handleCloseDialog} />
+          onClose={this.handleCloseDialog}
+          onOk={this.state.dialog.handleOk} />
       </form>
     );
   }
 }
 
-export default withStyles(styles)(Forms);
+export default withStyles(styles)(Form);
+
+function isMessageValid(message) {
+  return message.length < 10 || message.length > 800;
+}
 
 function validateEmail(email) {
   var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;

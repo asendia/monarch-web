@@ -7,10 +7,6 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 class DialogBox extends React.Component {
-  handleClose = () => {
-    this.props.onClose();
-  };
-
   render() {
     return (
       <Dialog
@@ -25,11 +21,22 @@ class DialogBox extends React.Component {
             {this.props.dialog.description}
           </DialogContentText>
         </DialogContent>
+      {
+        this.props.onOk ?
         <DialogActions>
-          <Button onClick={this.handleClose} color='primary' autoFocus>
+          <Button onClick={this.props.onClose} color='secondary' autoFocus>
+            Cancel
+          </Button>
+          <Button onClick={this.props.onOk} color='primary' autoFocus>
+            Ok
+          </Button>
+        </DialogActions> :
+        <DialogActions>
+          <Button onClick={this.props.onClose} color='primary' autoFocus>
             Ok
           </Button>
         </DialogActions>
+      }
       </Dialog>
     );
   }
