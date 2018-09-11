@@ -182,7 +182,6 @@ class Form extends React.Component {
       );
       this.setState({ form: res.data });
     } catch (err) {
-      console.error(err);
       this.loadFromSessionStorage();
     }
   }
