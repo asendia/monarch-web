@@ -69,7 +69,7 @@ class Form extends React.Component {
         validation: {
           ...this.state.validation,
           message: `${event.target.value.length}/800`,
-          messageError: isMessageValid(event.target.value.length)
+          messageError: validateMessage(event.target.value.length)
         },
       });
     }
