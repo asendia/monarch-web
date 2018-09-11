@@ -44,10 +44,15 @@ class Form extends React.Component {
       return;
     }
     try {
-      const form = JSON.parse(window.sessionStorage.getItem('cloudtestament.form'));
-      this.setState({ form });
+      const formRaw = window.sessionStorage.getItem('cloudtestament.form');
+      const form = JSON.parse(formRaw);
+      if (form !== null && form !== undefined) {
+        this.setState({ form });
+      }
     }
-    catch (err) {}
+    catch (err) {
+      window.sessionStorage.removeItem('cloudtestament.form');
+    }
   }
   handleChange = (key) => (event) => {
     this.setState({
