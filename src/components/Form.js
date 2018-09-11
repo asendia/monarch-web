@@ -142,11 +142,14 @@ class Form extends React.Component {
     })
   }
   openDialogAfterSubmit = () => {
+    const message = this.state.form.isActive ?
+      ' and ACTIVATED' :
+      ' but NOT YET ACTIVE. Check the activation toggle and click submit to activate';
     this.setState({
       dialog: {
         open: true,
         title: 'Submission complete',
-        description: 'Your testament has been submitted',
+        description: 'Your testament has been submitted' + message,
       },
     })
   }
@@ -234,7 +237,7 @@ class Form extends React.Component {
             />
           }
           className={classes.switch}
-          label='Activate'
+          label='Enable this testament'
         />
         <Button
           onClick={this.handleSubmit}
