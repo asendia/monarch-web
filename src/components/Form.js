@@ -92,9 +92,10 @@ class Form extends React.Component {
       return validateEmail(email);
     }).join(',');
     const message = this.state.form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
+    const isEmailValid = emails.length === 0 || emails > 3;
     this.setState({
       validation: {
-        emails: emails.length === 0 || emails > 3 ?
+        emails: isEmailValid ?
           `email list are too ${emails.length > 3 ? 'long' : 'short'}, should be at least 1 and no more than 3.` :
           '',
         message: isMessageValid(message) ?
@@ -114,6 +115,9 @@ class Form extends React.Component {
   
     if (!this.props.netlifyIdentity.currentUser()) {
       return this.openDialogInviteRegister();
+    }
+    if (!isEmailValid || !isMessageValid) {
+      return;
     }
 
     // Submit form
