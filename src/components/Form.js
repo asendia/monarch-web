@@ -69,7 +69,7 @@ class Form extends React.Component {
         validation: {
           ...this.state.validation,
           message: `${event.target.value.length}/800`,
-          messageError: validateMessage(event.target.value.length)
+          messageError: !validateMessage(event.target.value.length)
         },
       });
     }
@@ -275,7 +275,7 @@ class Form extends React.Component {
 export default withStyles(styles)(Form);
 
 function validateMessage(message) {
-  return message.length < 10 || message.length > 800;
+  return message.length >= 10 && message.length <= 800;
 }
 
 function validateEmail(email) {
