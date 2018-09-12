@@ -32,6 +32,7 @@ class Form extends React.Component {
       emails: '',
       message: '',
     },
+    isLoading: false,
   }
   saveToSessionStorage = debounce(() => {
     if (!window.sessionStorage) {
@@ -131,6 +132,7 @@ class Form extends React.Component {
     // Submit form
     try {
       const headers = await generateHeaders(this.props.netlifyIdentity);
+      this.setState({ isLoading: true });
       await axios.post(
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
         {
@@ -143,6 +145,7 @@ class Form extends React.Component {
     } catch (err) {
       console.error(err);
     }
+    this.setState({ isLoading: true });
   }
   handleCloseDialog = () => {
     this.setState({ dialog: { title: '', open: false } });
@@ -265,6 +268,7 @@ class Form extends React.Component {
           variant='contained'
           color='primary'
           className={classes.button}
+          disabled={this.props.isLoading}
         >
           submit
         </Button>

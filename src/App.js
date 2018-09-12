@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import netlifyIdentity from 'netlify-identity-widget';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoginButton from './components/LoginButton';
@@ -7,10 +6,7 @@ import './App.css';
 import Form from './components/Form';
 import { getParameterByName } from './QueryString';
 import { protractTestament } from './ApiCalls';
-
-netlifyIdentity.init({
-  container: '#netlify-modal' // defaults to document.body,
-});
+import UserContext from './UserContext';
 
 class App extends Component {
   async componentDidMount() {
@@ -28,13 +24,21 @@ class App extends Component {
   render() {
     return (
       <div className='App'>
-        <Header netlifyIdentity={netlifyIdentity} />
-        <div className='App-intro'>
-          <LoginButton netlifyIdentity={netlifyIdentity} />
-          <div style={{ borderTop: '1px grey solid', margin: '8px' }} />
-          <Form netlifyIdentity={netlifyIdentity} />
-        </div>
-        <Footer />
+        <UserContext.Provider>
+          <Header />
+          <div className='App-intro'>
+            <UserContext.Consumer>
+            {({ user, netlifyIdentity }) => (
+              <React.Fragment>
+                <LoginButton user={user} netlifyIdentity={netlifyIdentity} />
+                <div style={{ borderTop: '1px grey solid', margin: '8px' }} />
+                <Form user={user} netlifyIdentity={netlifyIdentity} />
+              </React.Fragment>
+            )}
+            </UserContext.Consumer>
+          </div>
+          <Footer />
+        </UserContext.Provider>
       </div>
     );
   }
