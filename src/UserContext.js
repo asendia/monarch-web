@@ -35,10 +35,10 @@ class UserContextProvider extends React.Component {
     });
     netlifyIdentity.on('login', user => {
       this.setState({ user, isLoading: false });
+      netlifyIdentity.close();
     });
     netlifyIdentity.on('logout', () => {
       this.setState({ user: undefined, isLoading: false });
-      netlifyIdentity.close();
     });
     netlifyIdentity.on('error', err => {
       this.setState({ user: undefined, isLoading: false });
