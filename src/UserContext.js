@@ -5,15 +5,12 @@ netlifyIdentity.init({
   container: '#netlify-modal' // defaults to document.body,
 });
 
-const UserContext = React.createContext({
-  netlifyIdentity,
-  user: undefined,
-});
+const UserContext = React.createContext();
 
 class UserContextProvider extends React.Component {
   state = {
     netlifyIdentity,
-    user: undefined,
+    user: netlifyIdentity.currentUser(),
     isLoading: false,
   }
   constructor(...args) {
