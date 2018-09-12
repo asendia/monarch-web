@@ -145,7 +145,7 @@ class Form extends React.Component {
     } catch (err) {
       console.error(err);
     }
-    this.setState({ isLoading: true });
+    this.setState({ isLoading: false });
   }
   handleCloseDialog = () => {
     this.setState({ dialog: { title: '', open: false } });
