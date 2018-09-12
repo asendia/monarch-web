@@ -268,7 +268,7 @@ class Form extends React.Component {
           variant='contained'
           color='primary'
           className={classes.button}
-          disabled={this.props.isLoading}
+          disabled={this.state.isLoading}
         >
           submit
         </Button>
