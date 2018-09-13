@@ -12,7 +12,8 @@ class Header extends React.Component {
         } catch (err) {}
         return (
           <header className='App-header'>
-            <h1 className='App-title'>Welcome to cloudtestament{user ? `, ${name}` : ''}</h1>
+            <h1 className='App-title'>cloudtestament{user ? `, ${name}` : ''}</h1>
+            <p>Your last testament in the cloud</p>
           </header>
         );
       }}

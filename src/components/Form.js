@@ -198,23 +198,23 @@ class Form extends React.Component {
       <form className={classes.container} onSubmit={this.handleSubmit}>
         <TextField
           id='emails'
-          label='Target emails, separated by comma (,)'
+          label={'Testament receivers\' emails'}
           autoComplete='off'
           className={classes.textField}
           value={this.state.form.emails}
           error={this.state.validation.emails !== ''}
-          helperText={this.state.validation.emails}
+          helperText={this.state.validation.emails || 'Comma (,) separated e.g. john@doe.com, ainz@gmail.com'}
           onChange={this.handleChangeText('emails')}
           margin='normal'
         />
         <TextField
           id='message'
-          label='Message, better write it first in notepad'
+          label='Testament message'
           autoComplete='off'
           className={classes.textField}
           value={this.state.form.message}
           error={this.state.validation.messageError}
-          helperText={this.state.validation.message}
+          helperText={this.state.validation.message || 'Multi-line support'}
           onChange={this.handleChangeText('message')}
           multiline
           rowsMax='20'
@@ -222,7 +222,7 @@ class Form extends React.Component {
         />
         <FormControl className={classes.formControl}>
           <InputLabel shrink htmlFor='input-silent-period'>
-            Silent period
+            Inactive period
           </InputLabel>
           <NativeSelect
             className={classes.selectEmpty}
@@ -234,7 +234,7 @@ class Form extends React.Component {
             <option value={180}>After 6 months</option>
             <option value={360}>After 12 months</option>
           </NativeSelect>
-          <FormHelperText>Total time of silence until the message is sent to target emails</FormHelperText>
+          <FormHelperText>Total inactive time until your message is sent to receivers' emails</FormHelperText>
         </FormControl>
         <FormControl className={classes.formControl}>
           <InputLabel shrink htmlFor='input-reminder-interval'>
@@ -249,7 +249,7 @@ class Form extends React.Component {
             <option value={15}>Every 15 days</option>
             <option value={30}>Every 30 days</option>
           </NativeSelect>
-          <FormHelperText>Time interval in which an email will be sent to {email} with instructions to reset your silent period</FormHelperText>
+          <FormHelperText>Time interval in which refresh link will be sent to <b>{email}</b>. If reset link is visited, inactive period will reset</FormHelperText>
         </FormControl>
         <FormControlLabel
           control={
