@@ -31,7 +31,7 @@ class App extends Component {
             {({ user, netlifyIdentity }) => (
               <React.Fragment>
                 <LoginButton user={user} netlifyIdentity={netlifyIdentity} />
-                <div style={{ borderTop: '1px grey solid', margin: '8px' }} />
+                <div style={{ borderTop: '1px grey solid', margin: '0 8px' }} />
                 <Form user={user} netlifyIdentity={netlifyIdentity} />
               </React.Fragment>
             )}
