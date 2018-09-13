@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from '../logo.svg';
 import UserContext from '../UserContext';
 
 class Header extends React.Component {
@@ -13,7 +12,6 @@ class Header extends React.Component {
         } catch (err) {}
         return (
           <header className='App-header'>
-            <img src={logo} className='App-logo' alt='logo' />
             <h1 className='App-title'>Welcome to cloudtestament{user ? `, ${name}` : ''}</h1>
           </header>
         );
