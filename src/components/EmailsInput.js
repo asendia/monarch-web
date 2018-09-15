@@ -36,7 +36,7 @@ export default class EmailsInput extends Component {
     if (!isValid) {
       return;
     }
-    const newValue = [...value, createOption(inputValue)];
+    const newValue = [...value, createEmailOption(inputValue)];
     this.setState({
       inputValue: '',
       value: newValue,
@@ -99,7 +99,7 @@ const styles = {
   }),
 };
 
-function createOption(label) {
+export function createEmailOption(label) {
   return {
     label,
     value: label,

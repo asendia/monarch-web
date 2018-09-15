@@ -13,7 +13,7 @@ import { generateHeaders } from '../ApiCalls';
 import DialogBox from './DialogBox';
 import styles from './Form.styles';
 import debounce from 'debounce';
-import EmailsInput from './EmailsInput';
+import EmailsInput, { createEmailOption } from './EmailsInput';
 
 class Form extends React.Component {
   state = {
@@ -199,7 +199,12 @@ class Form extends React.Component {
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/retrieve',
         { headers },
       );
-      this.setState({ form: res.data });
+      this.setState({
+        form: {
+          ...res.data,
+          emails: res.data.emails.split(', ').map(createEmailOption),
+        },
+      });
     } catch (err) {
       this.sessionStorage.clear();
     }
