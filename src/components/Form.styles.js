@@ -1,15 +1,15 @@
 const styles = theme => ({
   container: {
-    maxWidth: '500px',
+    maxWidth: 500,
     margin: '10px auto',
     display: 'flex',
     flexDirection: 'column',
   },
   textField: {
-    marginBottom: 18,
+    marginBottom: 10,
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
-    marginTop: 0,
+    marginTop: 10,
     minWidth: 120,
     overflow: 'hidden',
   },
