@@ -206,7 +206,9 @@ class Form extends React.Component {
         },
       });
     } catch (err) {
-      this.sessionStorage.clear();
+      if (window.sessionStorage) {
+        window.sessionStorage.clear();
+      }
     }
   }
   render() {
