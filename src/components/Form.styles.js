@@ -9,6 +9,7 @@ const styles = theme => ({
     marginBottom: 18,
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
+    marginTop: 0,
     minWidth: 120,
     overflow: 'hidden',
   },
