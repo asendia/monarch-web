@@ -13,11 +13,12 @@ import { generateHeaders } from '../ApiCalls';
 import DialogBox from './DialogBox';
 import styles from './Form.styles';
 import debounce from 'debounce';
+import EmailsInput from './EmailsInput';
 
 class Form extends React.Component {
   state = {
     form: {
-      emails: '',
+      emails: [],
       message: '',
       silentPeriod: 180,
       reminderInterval: 30,
@@ -93,20 +94,35 @@ class Form extends React.Component {
     });
     this.saveToSessionStorage();
   }
+  handleEmailsChange = (emails) => {
+    this.setState({
+      form: {
+        ...this.state.form,
+        emails,
+      },
+      validation: {
+        ...this.state.validation,
+        ...this.generateEmailsValidation(emails),
+      },
+    });
+    this.saveToSessionStorage();
+  }
+  generateEmailsValidation = (emails = this.state.form.emails) => {
+    const emailsError = emails.length === 0 || emails.length > 3;
+    return {
+      emails: `${emails.length}/3 emails${emailsError ? ', please specify at least 1 email' : ''}`,
+      emailsError,
+    };
+  }
   handleSubmit = async (event) => {
     event.preventDefault();
 
-    const emails = this.state.form.emails.replace(/ /g, '').split(',').filter(email => {
-      return validateEmail(email);
-    });
+    const emails = this.state.form.emails;
     const message = this.state.form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
-    const isEmailValid = emails.length > 0 && emails.length <= 3;
     const isMessageValid = validateMessage(message);
     this.setState({
       validation: {
-        emails: isEmailValid ?
-          '' :
-          `email list are too ${emails.length > 3 ? 'long' : 'short'}, should be at least 1 and no more than 3.`,
+        ...this.generateEmailsValidation(),
         message: isMessageValid ?
           `${message.length}/800` :
           `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
@@ -125,7 +141,7 @@ class Form extends React.Component {
     if (!this.props.netlifyIdentity.currentUser()) {
       return this.openDialogInviteRegister();
     }
-    if (!isEmailValid || !isMessageValid) {
+    if (this.state.validation.emailsError || !isMessageValid) {
       return;
     }
 
@@ -137,7 +153,7 @@ class Form extends React.Component {
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
         {
           ...this.state.form,
-          emails: emails.join(', '),
+          emails: emails.map(email => email.value).join(', '),
         },
         { headers },
       );
@@ -196,17 +212,16 @@ class Form extends React.Component {
     } catch (err) {}
     return (
       <form className={classes.container} onSubmit={this.handleSubmit}>
-        <TextField
-          id='emails'
-          label={'Testament receivers\' emails'}
-          autoComplete='off'
-          className={classes.textField}
-          value={this.state.form.emails}
-          error={this.state.validation.emails !== ''}
-          helperText={this.state.validation.emails || 'Comma (,) separated e.g. john@doe.com, ainz@gmail.com'}
-          onChange={this.handleChangeText('emails')}
-          margin='normal'
-        />
+        <FormControl className={classes.formControl}>
+          <EmailsInput
+            id='emails'
+            value={this.state.form.emails}
+            onChange={this.handleEmailsChange}
+            error={this.state.validation.emailsError}
+            helperText={this.state.validation.emails}
+          />
+          <FormHelperText error={this.state.validation.emailsError}>{this.state.validation.emails || 'e.g. john@doe.com, ainz@gmail.com'}</FormHelperText>
+        </FormControl>
         <TextField
           id='message'
           label='Testament message'
@@ -214,7 +229,7 @@ class Form extends React.Component {
           className={classes.textField}
           value={this.state.form.message}
           error={this.state.validation.messageError}
-          helperText={this.state.validation.message || 'Multi-line support'}
+          helperText={this.state.validation.message}
           onChange={this.handleChangeText('message')}
           multiline
           rowsMax='20'
@@ -285,9 +300,4 @@ export default withStyles(styles)(Form);
 
 function validateMessage(message) {
   return message.length >= 10 && message.length <= 800;
-}
-
-function validateEmail(email) {
-  var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  return re.test(String(email).toLowerCase());
 }

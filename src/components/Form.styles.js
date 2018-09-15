@@ -6,7 +6,6 @@ const styles = theme => ({
     flexDirection: 'column',
   },
   textField: {
-    marginTop: 0,
     marginBottom: 18,
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
