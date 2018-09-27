@@ -3,6 +3,7 @@
 /
   Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com
   Referrer-Policy: origin
+  Feature-Policy: geolocation 'none'; notifications 'none'; microphone 'none'; camera 'none'; fullscreen 'none'; payment 'none'; sync-xhr 'none'
   X-XSS-Protection: 1; mode=block
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
