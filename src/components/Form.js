@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -15,33 +15,31 @@ import styles from './Form.styles';
 import debounce from 'debounce';
 import EmailsInput, { createEmailOption } from './EmailsInput';
 
-class Form extends React.Component {
-  state = {
-    form: {
-      emails: [],
-      message: '',
-      silentPeriod: 180,
-      reminderInterval: 30,
-      isActive: false,
-    },
-    dialog: {
-      open: false,
-      title: '',
-      text: '',
-    },
-    validation: {
-      emails: '',
-      message: '',
-    },
-    isLoading: false,
-  }
-  saveToSessionStorage = debounce(() => {
+function Form(props) {
+  const [form, setForm] = useState({
+    emails: [],
+    message: '',
+    silentPeriod: 180,
+    reminderInterval: 30,
+    isActive: false,
+  });
+  const [dialog, setDialog] = useState({
+    open: false,
+    title: '',
+    text: '',
+  });
+  const [validation, setValidation] = useState({
+    emails: '',
+    message: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const saveToSessionStorage = debounce(() => {
     if (!window.sessionStorage) {
       return;
     }
-    window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(this.state.form));
-  }, 500)
-  loadFromSessionStorage = () => {
+    window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(form));
+  }, 500);
+  function loadFromSessionStorage() {
     if (!window.sessionStorage) {
       return;
     }
@@ -49,258 +47,241 @@ class Form extends React.Component {
       const formRaw = window.sessionStorage.getItem('cloudtestament.form');
       const form = JSON.parse(formRaw);
       if (form !== null && form !== undefined) {
-        this.setState({ form });
+        setForm(form);
       }
     }
     catch (err) {
       window.sessionStorage.removeItem('cloudtestament.form');
     }
   }
-  handleChangeValue = (key, value) => {
-    this.setState({
-      form: {
-        ...this.state.form,
-        [key]: value,
-      },
+  function handleChangeValue(key, value) {
+    setForm({
+      ...form,
+      [key]: value,
     });
   }
-  handleChangeText = (key) => (event) => {
-    this.handleChangeValue(key, event.target.value);
+  const handleChangeText = (key) => (event) => {
+    handleChangeValue(key, event.target.value);
     if (key === 'message') {
-      this.setState({
-        validation: {
-          ...this.state.validation,
-          message: `${event.target.value.length}/800`,
-          messageError: !validateMessage(event.target.value)
-        },
+      setValidation({
+        ...validation,
+        message: `${event.target.value.length}/800`,
+        messageError: !validateMessage(event.target.value),
       });
     }
-    this.saveToSessionStorage();
+    saveToSessionStorage();
   }
-  handleChangeSelect = (key) => (event) => {
-    this.handleChangeValue(key, parseInt(event.target.value, 10));
-    this.saveToSessionStorage();
+  const handleChangeSelect = (key) => (event) => {
+    handleChangeValue(key, parseInt(event.target.value, 10));
+    saveToSessionStorage();
   }
   // Cron activation
-  handleActivationToggle = (event) => {
-    if (!this.props.netlifyIdentity.currentUser()) {
-      return this.openDialogInviteRegister();
+  function handleActivationToggle(event) {
+    if (!props.netlifyIdentity.currentUser()) {
+      return openDialogInviteRegister();
     }
-    this.setState({
-      form: {
-        ...this.state.form,
-        isActive: event.target.checked,
-      },
+    setForm({
+      ...form,
+      isActive: event.target.checked,
     });
-    this.saveToSessionStorage();
+    saveToSessionStorage();
   }
-  handleEmailsChange = (emails) => {
-    this.setState({
-      form: {
-        ...this.state.form,
-        emails,
-      },
-      validation: {
-        ...this.state.validation,
-        ...this.generateEmailsValidation(emails),
-      },
+  function handleEmailsChange(emails) {
+    setForm({
+      ...form,
+      emails,
     });
-    this.saveToSessionStorage();
+    setValidation({
+      ...validation,
+      ...generateEmailsValidation(emails),
+    })
+    saveToSessionStorage();
   }
-  generateEmailsValidation = (emails = this.state.form.emails) => {
+  function generateEmailsValidation(emails = form.emails) {
     const emailsError = emails.length === 0 || emails.length > 3;
     return {
       emails: `${emails.length}/3 emails${emailsError ? ', please specify at least 1 email' : ''}`,
       emailsError,
     };
   }
-  handleSubmit = async (event) => {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const emails = this.state.form.emails;
-    const message = this.state.form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
+    const emails = form.emails;
+    const message = form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
     const isMessageValid = validateMessage(message);
-    this.setState({
-      validation: {
-        ...this.generateEmailsValidation(),
-        message: isMessageValid ?
-          `${message.length}/800` :
-          `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
-        messageError: !isMessageValid,
-      },
+    setValidation({
+      ...generateEmailsValidation(),
+      message: isMessageValid ?
+        `${message.length}/800` :
+        `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
+      messageError: !isMessageValid,
     });
-  
-    this.setState({
-      form: {
-        ...this.state.form,
-        message,
-      },
+    setForm({
+      ...form,
+      message,
     });
-    this.saveToSessionStorage();
+    saveToSessionStorage();
   
-    if (!this.props.netlifyIdentity.currentUser()) {
-      return this.openDialogInviteRegister();
+    if (!props.netlifyIdentity.currentUser()) {
+      return openDialogInviteRegister();
     }
-    if (this.state.validation.emailsError || !isMessageValid) {
+    if (validation.emailsError || !isMessageValid) {
       return;
     }
 
     // Submit form
     try {
-      const headers = await generateHeaders(this.props.netlifyIdentity);
-      this.setState({ isLoading: true });
+      const headers = await generateHeaders(props.netlifyIdentity);
+      setIsLoading(true);
       await axios.post(
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
         {
-          ...this.state.form,
+          ...form,
           emails: emails.map(email => email.value).join(', '),
         },
         { headers },
       );
-      this.openDialogAfterSubmit();
+      openDialogAfterSubmit();
     } catch (err) {
       console.error(err);
     }
-    this.setState({ isLoading: false });
+    setIsLoading(false);
   }
-  handleCloseDialog = () => {
-    this.setState({ dialog: { title: '', open: false } });
+  function handleCloseDialog() {
+    setDialog({
+      title: '',
+      open: false,
+    });
   }
-  openDialogInviteRegister = () => {
-    this.saveToSessionStorage();
-    this.setState({
-      dialog: {
-        open: true,
-        title: 'Please login',
-        description: 'You must login first in order to try cloudtestament',
-      },
+  function openDialogInviteRegister() {
+    saveToSessionStorage();
+    setDialog({
+      open: true,
+      title: 'Please login',
+      description: 'You must login first in order to try cloudtestament',
     })
   }
-  openDialogAfterSubmit = () => {
-    const message = this.state.form.isActive ?
+  function openDialogAfterSubmit() {
+    const message = form.isActive ?
       ' and ACTIVATED' :
       ' but NOT YET ACTIVE. Check the activation toggle and click submit to activate';
-    this.setState({
-      dialog: {
-        open: true,
-        title: 'Submission complete',
-        description: 'Your testament has been submitted' + message,
-      },
+    setDialog({
+      open: true,
+      title: 'Submission complete',
+      description: 'Your testament has been submitted' + message,
     })
   }
-  async componentDidMount() {
-    if (!this.props.netlifyIdentity.currentUser()) {
-      this.loadFromSessionStorage();
+  useEffect(async () => {
+    if (!props.netlifyIdentity.currentUser()) {
+      loadFromSessionStorage();
       return;
     }
     try {
-      const headers = await generateHeaders(this.props.netlifyIdentity);
+      const headers = await generateHeaders(props.netlifyIdentity);
       const res = await axios.get(
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/retrieve',
         { headers },
       );
-      this.setState({
-        form: {
-          ...res.data,
-          emails: res.data.emails.split(', ').map(createEmailOption),
-        },
+      setForm({
+        ...res.data,
+        emails: res.data.emails.split(', ').map(createEmailOption),
       });
     } catch (err) {
       if (window.sessionStorage) {
         window.sessionStorage.clear();
       }
     }
-  }
-  render() {
-    const { classes } = this.props;
-    let email = 'your email';
-    try {
-      email = this.props.netlifyIdentity.currentUser().email;
-    } catch (err) {}
-    return (
-      <form className={classes.container} onSubmit={this.handleSubmit}>
-        <FormControl className={classes.formControl}>
-          <EmailsInput
-            id='emails'
-            value={this.state.form.emails}
-            onChange={this.handleEmailsChange}
-            error={this.state.validation.emailsError}
-            helperText={this.state.validation.emails}
-          />
-          <FormHelperText error={this.state.validation.emailsError}>{this.state.validation.emails || 'e.g. john@doe.com, ainz@gmail.com'}</FormHelperText>
-        </FormControl>
-        <TextField
-          id='message'
-          label='Testament message'
-          autoComplete='off'
-          className={classes.textField}
-          value={this.state.form.message}
-          error={this.state.validation.messageError}
-          helperText={this.state.validation.message}
-          onChange={this.handleChangeText('message')}
-          multiline
-          rowsMax='20'
-          margin='normal'
+  }, [props.key]);
+
+  const { classes } = props;
+  let email = 'your email';
+  try {
+    email = props.netlifyIdentity.currentUser().email;
+  } catch (err) {}
+  return (
+    <form className={classes.container} onSubmit={handleSubmit}>
+      <FormControl className={classes.formControl}>
+        <EmailsInput
+          id='emails'
+          value={form.emails}
+          onChange={handleEmailsChange}
+          error={validation.emailsError}
+          helperText={validation.emails}
         />
-        <FormControl className={classes.formControl}>
-          <InputLabel shrink htmlFor='input-silent-period'>
-            Inactive period
-          </InputLabel>
-          <NativeSelect
-            className={classes.selectEmpty}
-            value={this.state.form.silentPeriod}
-            name='input-silent-period'
-            onChange={this.handleChangeSelect('silentPeriod')}
-          >
-            <option value={90}>After 3 months</option>
-            <option value={180}>After 6 months</option>
-            <option value={360}>After 12 months</option>
-          </NativeSelect>
-          <FormHelperText>Total inactive time until your message is sent to receivers' emails</FormHelperText>
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <InputLabel shrink htmlFor='input-reminder-interval'>
-            Reminder interval
-          </InputLabel>
-          <NativeSelect
-            className={classes.selectEmpty}
-            value={this.state.form.reminderInterval}
-            name='input-reminder-interval'
-            onChange={this.handleChangeSelect('reminderInterval')}
-          >
-            <option value={15}>Every 15 days</option>
-            <option value={30}>Every 30 days</option>
-          </NativeSelect>
-          <FormHelperText>Time interval in which refresh link will be sent to <b>{email}</b>. If reset link is visited, inactive period will reset</FormHelperText>
-        </FormControl>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={this.state.form.isActive}
-              onChange={this.handleActivationToggle}
-              value=''
-              color='primary'
-            />
-          }
-          className={classes.switch}
-          label='Enable this testament'
-        />
-        <Button
-          onClick={this.handleSubmit}
-          variant='contained'
-          color='primary'
-          className={classes.button}
-          disabled={this.state.isLoading}
+        <FormHelperText error={validation.emailsError}>{validation.emails || 'e.g. john@doe.com, ainz@gmail.com'}</FormHelperText>
+      </FormControl>
+      <TextField
+        id='message'
+        label='Testament message'
+        autoComplete='off'
+        className={classes.textField}
+        value={form.message}
+        error={validation.messageError}
+        helperText={validation.message}
+        onChange={handleChangeText('message')}
+        multiline
+        rowsMax='20'
+        margin='normal'
+      />
+      <FormControl className={classes.formControl}>
+        <InputLabel shrink htmlFor='input-silent-period'>
+          Inactive period
+        </InputLabel>
+        <NativeSelect
+          className={classes.selectEmpty}
+          value={form.silentPeriod}
+          name='input-silent-period'
+          onChange={handleChangeSelect('silentPeriod')}
         >
-          submit
-        </Button>
-        <DialogBox
-          dialog={this.state.dialog}
-          onClose={this.handleCloseDialog}
-          onOk={this.state.dialog.handleOk} />
-      </form>
-    );
-  }
+          <option value={90}>After 3 months</option>
+          <option value={180}>After 6 months</option>
+          <option value={360}>After 12 months</option>
+        </NativeSelect>
+        <FormHelperText>Total inactive time until your message is sent to receivers' emails</FormHelperText>
+      </FormControl>
+      <FormControl className={classes.formControl}>
+        <InputLabel shrink htmlFor='input-reminder-interval'>
+          Reminder interval
+        </InputLabel>
+        <NativeSelect
+          className={classes.selectEmpty}
+          value={form.reminderInterval}
+          name='input-reminder-interval'
+          onChange={handleChangeSelect('reminderInterval')}
+        >
+          <option value={15}>Every 15 days</option>
+          <option value={30}>Every 30 days</option>
+        </NativeSelect>
+        <FormHelperText>Time interval in which refresh link will be sent to <b>{email}</b>. If reset link is visited, inactive period will reset</FormHelperText>
+      </FormControl>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={form.isActive}
+            onChange={handleActivationToggle}
+            value=''
+            color='primary'
+          />
+        }
+        className={classes.switch}
+        label='Enable this testament'
+      />
+      <Button
+        onClick={handleSubmit}
+        variant='contained'
+        color='primary'
+        className={classes.button}
+        disabled={isLoading}
+      >
+        submit
+      </Button>
+      <DialogBox
+        dialog={dialog}
+        onClose={handleCloseDialog}
+        onOk={dialog.handleOk} />
+    </form>
+  );
 }
 
 export default withStyles(styles)(Form);

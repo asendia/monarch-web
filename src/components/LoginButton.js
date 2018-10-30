@@ -15,46 +15,41 @@ const styles = (theme) => ({
   },
 });
 
-class LoginButton extends React.Component {
-  state = {
-    isLoading: false,
+function LoginButton(props) {
+  function handleLogin() {
+    props.netlifyIdentity.open('login');
   }
-  handleLogin = () => {
-    this.props.netlifyIdentity.open('login');
+  function handleLogout() {
+    props.netlifyIdentity.logout();
   }
-  handleLogout = () => {
-    this.props.netlifyIdentity.logout();
-  }
-  render() {
-    const { classes, isLoading, user } = this.props;
-    const text = oc(user, 'user_metadata.full_name') || oc(user, 'email') || 'User';
-    return (
-      <div className={classes.wrapper}>
-      {
-      user ?
-        <React.Fragment>
-          <div className={classes.greetings}>Hello, {text}</div>
-          <Button 
-            onClick={this.handleLogout}
-            variant='contained'
-            color='secondary'
-            disabled={isLoading}
-          >
-            logout
-          </Button>
-        </React.Fragment> :
+  const { classes, isLoading, user } = props;
+  const text = oc(user, 'user_metadata.full_name') || oc(user, 'email') || 'User';
+  return (
+    <div className={classes.wrapper}>
+    {
+    user ?
+      <React.Fragment>
+        <div className={classes.greetings}>Hello, {text}</div>
         <Button 
-          onClick={this.handleLogin}
+          onClick={handleLogout}
           variant='contained'
-          color='primary'
+          color='secondary'
           disabled={isLoading}
         >
-          login
+          logout
         </Button>
-      }
-      </div>
-    );
-  }
+      </React.Fragment> :
+      <Button 
+        onClick={handleLogin}
+        variant='contained'
+        color='primary'
+        disabled={isLoading}
+      >
+        login
+      </Button>
+    }
+    </div>
+  );
 }
 
 export default withStyles(styles)(LoginButton);

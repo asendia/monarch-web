@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import netlifyIdentity from 'netlify-identity-widget';
 
 netlifyIdentity.init({
@@ -7,52 +7,52 @@ netlifyIdentity.init({
 
 const UserContext = React.createContext();
 
-class UserContextProvider extends React.Component {
-  state = {
-    netlifyIdentity,
-    user: netlifyIdentity.currentUser(),
-    isLoading: false,
+function UserContextProvider(props) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState(netlifyIdentity.currentUser());
+  const netlifyLogin = netlifyIdentity.login;
+  netlifyIdentity.login = (...args) => {
+    setIsLoading(true);
+    netlifyLogin(...args);
   }
-  constructor(...args) {
-    super(...args);
-    const netlifyLogin = netlifyIdentity.login;
-    netlifyIdentity.login = (...args) => {
-      this.setState({ isLoading: true });
-      netlifyLogin(...args);
-    }
-    const netlifyLogout = netlifyIdentity.logout;
-    netlifyIdentity.logout = (...args) => {
-      this.setState({ isLoading: true });
-      netlifyLogout(...args);
-    }
+  const netlifyLogout = netlifyIdentity.logout;
+  netlifyIdentity.logout = (...args) => {
+    setIsLoading(true);
+    netlifyLogout(...args);
   }
-  componentDidMount() {
+  useEffect(() => {
     netlifyIdentity.on('init', user => {
-      this.setState({ user, isLoading: false });
+      setIsLoading(false);
+      setUser(user);
     });
     netlifyIdentity.on('login', user => {
-      this.setState({ user, isLoading: false });
+      setIsLoading(false);
+      setUser(user);
       netlifyIdentity.close();
     });
     netlifyIdentity.on('logout', () => {
       if (window.sessionStorage) {
         window.sessionStorage.clear();
       }
-      this.setState({ user: undefined, isLoading: false });
+      setIsLoading(false);
+      setUser(undefined);
     });
     netlifyIdentity.on('error', err => {
-      this.setState({ user: undefined, isLoading: false });
+      setIsLoading(false);
+      setUser(undefined);
     });
     // netlifyIdentity.on('open', () => console.log('Widget opened'));
     // netlifyIdentity.on('close', () => console.log('Widget closed'));
-  }
-  render() {
-    return (
-      <UserContext.Provider value={this.state}>
-        {this.props.children}
-      </UserContext.Provider>
-    );
-  }
+  });
+  return (
+    <UserContext.Provider value={{
+      netlifyIdentity,
+      user,
+      isLoading,
+    }}>
+      {props.children}
+    </UserContext.Provider>
+  );
 }
 
 export default {
