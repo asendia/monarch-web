@@ -16,30 +16,28 @@ import debounce from 'debounce';
 import EmailsInput, { createEmailOption } from './EmailsInput';
 
 function Form(props) {
-  const [state, setState] = useState({
-    form: {
-      emails: [],
-      message: '',
-      silentPeriod: 180,
-      reminderInterval: 30,
-      isActive: false,
-    },
-    dialog: {
-      open: false,
-      title: '',
-      text: '',
-    },
-    validation: {
-      emails: '',
-      message: '',
-    },
-    isLoading: false,
+  const [form, setForm] = useState({
+    emails: [],
+    message: '',
+    silentPeriod: 180,
+    reminderInterval: 30,
+    isActive: false,
   });
+  const [dialog, setDialog] = useState({
+    open: false,
+    title: '',
+    text: '',
+  });
+  const [validation, setValidation] = useState({
+    emails: '',
+    message: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const saveToSessionStorage = debounce(() => {
     if (!window.sessionStorage) {
       return;
     }
-    window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(state.form));
+    window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(form));
   }, 500);
   function loadFromSessionStorage() {
     if (!window.sessionStorage) {
@@ -49,10 +47,7 @@ function Form(props) {
       const formRaw = window.sessionStorage.getItem('cloudtestament.form');
       const form = JSON.parse(formRaw);
       if (form !== null && form !== undefined) {
-        setState({
-          ...state,
-          form,
-        });
+        setForm(form);
       }
     }
     catch (err) {
@@ -60,24 +55,18 @@ function Form(props) {
     }
   }
   function handleChangeValue(key, value) {
-    setState({
-      ...state,
-      form: {
-        ...state.form,
-        [key]: value,
-      },
+    setForm({
+      ...form,
+      [key]: value,
     });
   }
   const handleChangeText = (key) => (event) => {
     handleChangeValue(key, event.target.value);
     if (key === 'message') {
-      setState({
-        ...state,
-        validation: {
-          ...state.validation,
-          message: `${event.target.value.length}/800`,
-          messageError: !validateMessage(event.target.value),
-        },
+      setValidation({
+        ...validation,
+        message: `${event.target.value.length}/800`,
+        messageError: !validateMessage(event.target.value),
       });
     }
     saveToSessionStorage();
@@ -91,30 +80,24 @@ function Form(props) {
     if (!props.netlifyIdentity.currentUser()) {
       return openDialogInviteRegister();
     }
-    setState({
-      ...state,
-      form: {
-        ...state.form,
-        isActive: event.target.checked,
-      },
+    setForm({
+      ...form,
+      isActive: event.target.checked,
     });
     saveToSessionStorage();
   }
   function handleEmailsChange(emails) {
-    setState({
-      ...state,
-      form: {
-        ...state.form,
-        emails,
-      },
-      validation: {
-        ...state.validation,
-        ...generateEmailsValidation(emails),
-      },
+    setForm({
+      ...form,
+      emails,
     });
+    setValidation({
+      ...validation,
+      ...generateEmailsValidation(emails),
+    })
     saveToSessionStorage();
   }
-  function generateEmailsValidation(emails = state.form.emails) {
+  function generateEmailsValidation(emails = form.emails) {
     const emailsError = emails.length === 0 || emails.length > 3;
     return {
       emails: `${emails.length}/3 emails${emailsError ? ', please specify at least 1 email' : ''}`,
@@ -124,44 +107,37 @@ function Form(props) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const emails = state.form.emails;
-    const message = state.form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
+    const emails = form.emails;
+    const message = form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
     const isMessageValid = validateMessage(message);
-    setState({
-      ...state,
-      validation: {
-        ...generateEmailsValidation(),
-        message: isMessageValid ?
-          `${message.length}/800` :
-          `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
-        messageError: !isMessageValid,
-      },
+    setValidation({
+      ...generateEmailsValidation(),
+      message: isMessageValid ?
+        `${message.length}/800` :
+        `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
+      messageError: !isMessageValid,
     });
-  
-    setState({
-      ...state,
-      form: {
-        ...state.form,
-        message,
-      },
+    setForm({
+      ...form,
+      message,
     });
     saveToSessionStorage();
   
     if (!props.netlifyIdentity.currentUser()) {
       return openDialogInviteRegister();
     }
-    if (state.validation.emailsError || !isMessageValid) {
+    if (validation.emailsError || !isMessageValid) {
       return;
     }
 
     // Submit form
     try {
       const headers = await generateHeaders(props.netlifyIdentity);
-      setState({ ...state, isLoading: true });
+      setIsLoading(true);
       await axios.post(
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
         {
-          ...state.form,
+          ...form,
           emails: emails.map(email => email.value).join(', '),
         },
         { headers },
@@ -170,33 +146,30 @@ function Form(props) {
     } catch (err) {
       console.error(err);
     }
-    setState({ ...state, isLoading: false });
+    setIsLoading(false);
   }
   function handleCloseDialog() {
-    setState({ ...state, dialog: { title: '', open: false } });
+    setDialog({
+      title: '',
+      open: false,
+    });
   }
   function openDialogInviteRegister() {
     saveToSessionStorage();
-    setState({
-      ...state,
-      dialog: {
-        open: true,
-        title: 'Please login',
-        description: 'You must login first in order to try cloudtestament',
-      },
+    setDialog({
+      open: true,
+      title: 'Please login',
+      description: 'You must login first in order to try cloudtestament',
     })
   }
   function openDialogAfterSubmit() {
-    const message = state.form.isActive ?
+    const message = form.isActive ?
       ' and ACTIVATED' :
       ' but NOT YET ACTIVE. Check the activation toggle and click submit to activate';
-    setState({
-      ...state,
-      dialog: {
-        open: true,
-        title: 'Submission complete',
-        description: 'Your testament has been submitted' + message,
-      },
+    setDialog({
+      open: true,
+      title: 'Submission complete',
+      description: 'Your testament has been submitted' + message,
     })
   }
   useEffect(async () => {
@@ -210,12 +183,9 @@ function Form(props) {
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/retrieve',
         { headers },
       );
-      setState({
-        ...state,
-        form: {
-          ...res.data,
-          emails: res.data.emails.split(', ').map(createEmailOption),
-        },
+      setForm({
+        ...res.data,
+        emails: res.data.emails.split(', ').map(createEmailOption),
       });
     } catch (err) {
       if (window.sessionStorage) {
@@ -234,21 +204,21 @@ function Form(props) {
       <FormControl className={classes.formControl}>
         <EmailsInput
           id='emails'
-          value={state.form.emails}
+          value={form.emails}
           onChange={handleEmailsChange}
-          error={state.validation.emailsError}
-          helperText={state.validation.emails}
+          error={validation.emailsError}
+          helperText={validation.emails}
         />
-        <FormHelperText error={state.validation.emailsError}>{state.validation.emails || 'e.g. john@doe.com, ainz@gmail.com'}</FormHelperText>
+        <FormHelperText error={validation.emailsError}>{validation.emails || 'e.g. john@doe.com, ainz@gmail.com'}</FormHelperText>
       </FormControl>
       <TextField
         id='message'
         label='Testament message'
         autoComplete='off'
         className={classes.textField}
-        value={state.form.message}
-        error={state.validation.messageError}
-        helperText={state.validation.message}
+        value={form.message}
+        error={validation.messageError}
+        helperText={validation.message}
         onChange={handleChangeText('message')}
         multiline
         rowsMax='20'
@@ -260,7 +230,7 @@ function Form(props) {
         </InputLabel>
         <NativeSelect
           className={classes.selectEmpty}
-          value={state.form.silentPeriod}
+          value={form.silentPeriod}
           name='input-silent-period'
           onChange={handleChangeSelect('silentPeriod')}
         >
@@ -276,7 +246,7 @@ function Form(props) {
         </InputLabel>
         <NativeSelect
           className={classes.selectEmpty}
-          value={state.form.reminderInterval}
+          value={form.reminderInterval}
           name='input-reminder-interval'
           onChange={handleChangeSelect('reminderInterval')}
         >
@@ -288,7 +258,7 @@ function Form(props) {
       <FormControlLabel
         control={
           <Switch
-            checked={state.form.isActive}
+            checked={form.isActive}
             onChange={handleActivationToggle}
             value=''
             color='primary'
@@ -302,14 +272,14 @@ function Form(props) {
         variant='contained'
         color='primary'
         className={classes.button}
-        disabled={state.isLoading}
+        disabled={isLoading}
       >
         submit
       </Button>
       <DialogBox
-        dialog={state.dialog}
+        dialog={dialog}
         onClose={handleCloseDialog}
-        onOk={state.dialog.handleOk} />
+        onOk={dialog.handleOk} />
     </form>
   );
 }
