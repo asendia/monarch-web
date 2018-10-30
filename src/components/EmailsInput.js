@@ -1,81 +1,73 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import CreatableSelect from 'react-select/lib/Creatable';
 import { validateEmail } from '../Validate';
 
-export default class EmailsInput extends Component {
-  state = {
-    inputValue: '',
-    value: [],
+export default function EmailsInput(props) {
+  const [inputValue, setInputValue] = useState('');
+  const [value, setValue] = useState([]);
+  function handleChange(value) {
+    setValue(value);
+    props.onChange && props.onChange(value);
   }
-  handleChange = (value) => {
-    this.setState({ value });
-    this.props.onChange && this.props.onChange(value);
+  function handleInputChange(inputValue) {
+    setInputValue(inputValue);
   }
-  handleInputChange = (inputValue) => {
-    this.setState({ inputValue });
-  }
-  handleKeyDown = (event) => {
-    const { inputValue } = this.state;
+  function handleKeyDown(event) {
     if (!inputValue) return;
     switch (event.key) {
       case 'Enter':
       case 'Tab':
       case ' ':
       case ',':
-        this.tryAddingEmail();
+        tryAddingEmail();
         event.preventDefault();
         break;
       default:
     }
   }
-  tryAddingEmail = () => {
-    const { inputValue, value } = this.state;
+  function tryAddingEmail() {
     const isValid = value.length < 3 &&
-    validateEmail(inputValue) &&
-    value.find(v => v.value === inputValue) === undefined
+      validateEmail(inputValue) &&
+      value.find(v => v.value === inputValue) === undefined
     if (!isValid) {
       return;
     }
     const newValue = [...value, createEmailOption(inputValue)];
-    this.setState({
-      inputValue: '',
-      value: newValue,
-    });
-    this.props.onChange && this.props.onChange(newValue);
+    setInputValue('');
+    setValue(newValue);
+    props.onChange && props.onChange(newValue);
   }
-  render() {
-    const newStyles = this.props.error ?
-      {
-        ...styles,
-        control: () => ({
-          border: 'none',
-          borderBottom: '2px solid #f44336',
-          color: '#f44336',
-        }),
-        placeholder: (obj) => ({
-          ...obj,
-          color: '#f44336',
-        }),
-      } : styles;
-    return (
-      <CreatableSelect
-        id={this.props.id}
-        onChange={this.handleChange}
-        onInputChange={this.handleInputChange}
-        onKeyDown={this.handleKeyDown}
-        onBlur={this.tryAddingEmail}
-        isMulti
-        menuIsOpen={false}
-        noOptionsMessage={() => 'Please enter valid email'}
-        formatCreateLabel={(input) => `Press enter to add ${input}`}
-        placeholder={'Testament receivers\' emails'}
-        components={components}
-        styles={newStyles}
-        value={this.props.value || this.state.value}
-        inputValue={this.state.inputValue}
-      />
-    );
-  }
+  const newStyles = props.error ?
+    {
+      ...styles,
+      control: () => ({
+        border: 'none',
+        borderBottom: '2px solid #f44336',
+        color: '#f44336',
+      }),
+      placeholder: (obj) => ({
+        ...obj,
+        color: '#f44336',
+      }),
+    } : styles;
+  return (
+    <CreatableSelect
+      id={props.id}
+      onChange={handleChange}
+      onInputChange={handleInputChange}
+      onKeyDown={handleKeyDown}
+      onBlur={tryAddingEmail}
+      isMulti
+      menuIsOpen={false}
+      noOptionsMessage={() => 'Please enter valid email'}
+      formatCreateLabel={(input) => `Press enter to add ${input}`}
+      placeholder={'Testament receivers\' emails'}
+      components={components}
+      styles={newStyles}
+      value={props.value || value}
+      inputValue={inputValue}
+    />
+  );
 }
 
 const components = {
