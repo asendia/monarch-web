@@ -31,7 +31,7 @@ function UserContextProvider(props) {
       netlifyIdentity.close();
     });
     netlifyIdentity.on('logout', () => {
-      if (window.sessionStorage) {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
         window.sessionStorage.clear();
       }
       setIsLoading(false);
