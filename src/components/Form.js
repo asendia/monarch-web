@@ -29,18 +29,11 @@ function Form(props) {
     text: '',
   });
   const [validation, setValidation] = useState({
-    emails: '',
     message: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const saveToSessionStorage = debounce(() => {
-    if (!window.sessionStorage) {
-      return;
-    }
-    window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(form));
-  }, 500);
   function loadFromSessionStorage() {
-    if (!window.sessionStorage) {
+    if (typeof window === 'undefined' || !window.sessionStorage) {
       return;
     }
     try {
@@ -69,11 +62,9 @@ function Form(props) {
         messageError: !validateMessage(event.target.value),
       });
     }
-    saveToSessionStorage();
   }
   const handleChangeSelect = (key) => (event) => {
     handleChangeValue(key, parseInt(event.target.value, 10));
-    saveToSessionStorage();
   }
   // Cron activation
   function handleActivationToggle(event) {
@@ -84,25 +75,18 @@ function Form(props) {
       ...form,
       isActive: event.target.checked,
     });
-    saveToSessionStorage();
   }
   function handleEmailsChange(emails) {
+    if (!emails) {
+      return setValidation({
+        ...validation,
+        emailsError: true,
+      })
+    }
     setForm({
       ...form,
       emails,
     });
-    setValidation({
-      ...validation,
-      ...generateEmailsValidation(emails),
-    })
-    saveToSessionStorage();
-  }
-  function generateEmailsValidation(emails = form.emails) {
-    const emailsError = emails.length === 0 || emails.length > 3;
-    return {
-      emails: `${emails.length}/3 emails${emailsError ? ', please specify at least 1 email' : ''}`,
-      emailsError,
-    };
   }
   async function handleSubmit(event) {
     event.preventDefault();
@@ -111,7 +95,7 @@ function Form(props) {
     const message = form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
     const isMessageValid = validateMessage(message);
     setValidation({
-      ...generateEmailsValidation(),
+      ...validation,
       message: isMessageValid ?
         `${message.length}/800` :
         `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
@@ -121,7 +105,6 @@ function Form(props) {
       ...form,
       message,
     });
-    saveToSessionStorage();
   
     if (!props.netlifyIdentity.currentUser()) {
       return openDialogInviteRegister();
@@ -155,7 +138,7 @@ function Form(props) {
     });
   }
   function openDialogInviteRegister() {
-    saveToSessionStorage();
+    saveToSessionStorage(form);
     setDialog({
       open: true,
       title: 'Please login',
@@ -172,6 +155,9 @@ function Form(props) {
       description: 'Your testament has been submitted' + message,
     })
   }
+  useEffect(() => {
+    saveToSessionStorage(form);
+  }, [form]);
   useEffect(async () => {
     if (!props.netlifyIdentity.currentUser()) {
       loadFromSessionStorage();
@@ -188,7 +174,7 @@ function Form(props) {
         emails: res.data.emails.split(', ').map(createEmailOption),
       });
     } catch (err) {
-      if (window.sessionStorage) {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
         window.sessionStorage.clear();
       }
     }
@@ -201,16 +187,11 @@ function Form(props) {
   } catch (err) {}
   return (
     <form className={classes.container} onSubmit={handleSubmit}>
-      <FormControl className={classes.formControl}>
-        <EmailsInput
-          id='emails'
-          value={form.emails}
-          onChange={handleEmailsChange}
-          error={validation.emailsError}
-          helperText={validation.emails}
-        />
-        <FormHelperText error={validation.emailsError}>{validation.emails || 'e.g. john@doe.com, ainz@gmail.com'}</FormHelperText>
-      </FormControl>
+      <EmailsInput
+        id='emails'
+        emails={form.emails}
+        onChange={handleEmailsChange}
+      />
       <TextField
         id='message'
         label='Testament message'
@@ -289,3 +270,10 @@ export default withStyles(styles)(Form);
 function validateMessage(message) {
   return message.length >= 10 && message.length <= 800;
 }
+
+const saveToSessionStorage = debounce((form) => {
+  if (typeof window === 'undefined' && !window.sessionStorage) {
+    return;
+  }
+  window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(form));
+}, 500);

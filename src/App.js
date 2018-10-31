@@ -16,9 +16,9 @@ function App() {
     if (token && mode && id && token.length >= 128 && mode === 'protract') {
       try {
         await protractTestament(id, token);
-        window.alert('Protraction success!');
+        typeof window !== 'undefined' && window.alert('Protraction success!');
       } catch (err) {}
-      window.location.replace('/');
+      typeof window !== 'undefined' && window.location.replace('/');
     }
   });
   return (
