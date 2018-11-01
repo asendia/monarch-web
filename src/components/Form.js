@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -16,204 +16,115 @@ import debounce from 'debounce';
 import EmailsInput, { createEmailOption } from './EmailsInput';
 
 function Form(props) {
-  const [form, setForm] = useState({
-    emails: [],
-    message: '',
-    silentPeriod: 180,
-    reminderInterval: 30,
-    isActive: false,
-  });
-  const [dialog, setDialog] = useState({
-    open: false,
-    title: '',
-    text: '',
-  });
-  const [validation, setValidation] = useState({
-    message: '',
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  function loadFromSessionStorage() {
-    if (typeof window === 'undefined' || !window.sessionStorage) {
-      return;
-    }
-    try {
-      const formRaw = window.sessionStorage.getItem('cloudtestament.form');
-      const form = JSON.parse(formRaw);
-      if (form !== null && form !== undefined) {
-        setForm(form);
-      }
-    }
-    catch (err) {
-      window.sessionStorage.removeItem('cloudtestament.form');
-    }
-  }
-  function handleChangeValue(key, value) {
-    setForm({
-      ...form,
-      [key]: value,
-    });
-  }
-  const handleChangeText = (key) => (event) => {
-    handleChangeValue(key, event.target.value);
-    if (key === 'message') {
-      setValidation({
-        ...validation,
-        message: `${event.target.value.length}/800`,
-        messageError: !validateMessage(event.target.value),
-      });
-    }
-  }
-  const handleChangeSelect = (key) => (event) => {
-    handleChangeValue(key, parseInt(event.target.value, 10));
-  }
-  // Cron activation
-  function handleActivationToggle(event) {
-    if (!props.netlifyIdentity.currentUser()) {
-      return openDialogInviteRegister();
-    }
-    setForm({
-      ...form,
-      isActive: event.target.checked,
-    });
-  }
-  function handleEmailsChange(emails) {
-    if (!emails) {
-      return setValidation({
-        ...validation,
-        emailsError: true,
-      })
-    }
-    setForm({
-      ...form,
-      emails,
-    });
-  }
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    const emails = form.emails;
-    const message = form.message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
-    const isMessageValid = validateMessage(message);
-    setValidation({
-      ...validation,
-      message: isMessageValid ?
-        `${message.length}/800` :
-        `${message.length}/800, message is too ${message.length < 10 ? 'short' : 'long'}`,
-      messageError: !isMessageValid,
-    });
-    setForm({
-      ...form,
-      message,
-    });
-  
-    if (!props.netlifyIdentity.currentUser()) {
-      return openDialogInviteRegister();
-    }
-    if (validation.emailsError || !isMessageValid) {
-      return;
-    }
-
-    // Submit form
-    try {
-      const headers = await generateHeaders(props.netlifyIdentity);
-      setIsLoading(true);
-      await axios.post(
-        'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
-        {
-          ...form,
-          emails: emails.map(email => email.value).join(', '),
-        },
-        { headers },
-      );
-      openDialogAfterSubmit();
-    } catch (err) {
-      console.error(err);
-    }
-    setIsLoading(false);
-  }
-  function handleCloseDialog() {
-    setDialog({
-      title: '',
-      open: false,
-    });
-  }
-  function openDialogInviteRegister() {
-    saveToSessionStorage(form);
-    setDialog({
-      open: true,
-      title: 'Please login',
-      description: 'You must login first in order to try cloudtestament',
-    })
-  }
-  function openDialogAfterSubmit() {
-    const message = form.isActive ?
-      ' and ACTIVATED' :
-      ' but NOT YET ACTIVE. Check the activation toggle and click submit to activate';
-    setDialog({
-      open: true,
-      title: 'Submission complete',
-      description: 'Your testament has been submitted' + message,
-    })
-  }
-  useEffect(() => {
-    saveToSessionStorage(form);
-  }, [form]);
+  const [emails, setEmails, emailsValidation] = useField(() => JSON.parse(sessionStorageGetItem('emails')) || [], emailsValidator);
+  const [emailInput, setEmailInput] = useField(() => JSON.parse(sessionStorageGetItem('emailInput')) || '');
+  const [message, setMessage, messageValidation] = useField(() => JSON.parse(sessionStorageGetItem('message')) || '', messageValidator);
+  const [silentPeriod, setSilentPeriod] = useField(() => parseInt(sessionStorageGetItem('silentPeriod') || 180, 10));
+  const [reminderInterval, setReminderInterval] = useField(() => parseInt(sessionStorageGetItem('reminderInterval') || 30, 10));
+  const [isActive, setIsActive] = useState(() => false);
+  const [dialog, setDialog] = useState({ open: false, title: '', text: '', });
+  const [isLoading, setIsLoading] = useState(() => false);
+  useSessionStorage('emails', emails);
+  useSessionStorage('emailInput', emailInput);
+  useSessionStorage('message', message);
+  useSessionStorage('silentPeriod', silentPeriod);
+  useSessionStorage('reminderInterval', reminderInterval);
+  let email;
+  try { email = props.netlifyIdentity.currentUser().email; } catch (err) {}
   useEffect(async () => {
-    if (!props.netlifyIdentity.currentUser()) {
-      loadFromSessionStorage();
-      return;
-    }
     try {
       const headers = await generateHeaders(props.netlifyIdentity);
       const res = await axios.get(
         'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/retrieve',
         { headers },
       );
-      setForm({
-        ...res.data,
-        emails: res.data.emails.split(', ').map(createEmailOption),
+      setEmails(res.data.emails.split(', ').map(createEmailOption));
+      setMessage(res.data.message);
+      setSilentPeriod(res.data.silentPeriod);
+      setReminderInterval(res.data.reminderInterval);
+      setIsActive(res.data.isActive);
+    } catch (err) {}
+  }, [props.key]);
+  function openDialogInviteRegister() {
+    return setDialog({
+      open: true,
+      title: 'Please login',
+      description: 'You must login first in order to try cloudtestament',
+    });
+  }
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (email === undefined) {
+      return openDialogInviteRegister();
+    }
+    const error = emailsValidation.error || messageValidation.error;
+    if (error) {
+      return;
+    }
+    setIsLoading(true);
+    const trimmedMessage = message.trim().replace(/\n\s*\n\s*\n/g, '\n\n');
+    try {
+      const headers = await generateHeaders(props.netlifyIdentity);
+      await axios.post(
+        'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/initiate',
+        {
+          emails: emails.map(email => email.value).join(', '),
+          message: trimmedMessage,
+          silentPeriod,
+          reminderInterval,
+        },
+        { headers },
+      );
+      const message = isActive ?
+        ' and ACTIVATED' :
+        ' but NOT YET ACTIVE. Check the activation toggle and click submit to activate';
+      setDialog({
+        open: true,
+        title: 'Submission complete',
+        description: 'Your testament has been submitted' + message,
       });
     } catch (err) {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        window.sessionStorage.clear();
-      }
+      console.error(err);
     }
-  }, [props.key]);
-
-  const { classes } = props;
-  let email = 'your email';
-  try {
-    email = props.netlifyIdentity.currentUser().email;
-  } catch (err) {}
+    setIsLoading(false);
+    setMessage(trimmedMessage);
+    setIsLoading(false);
+  }
   return (
-    <form className={classes.container} onSubmit={handleSubmit}>
+    <form className={props.classes.container} onSubmit={handleSubmit}>
       <EmailsInput
         id='emails'
-        emails={form.emails}
-        onChange={handleEmailsChange}
+        emails={emails}
+        emailInput={emailInput}
+        onEmailsChange={setEmails}
+        onEmailInputChange={(e) => {
+          setEmailInput(e);
+        }}
+        error={emailsValidation.error}
+        helperText={emailsValidation.helperText}
       />
       <TextField
         id='message'
         label='Testament message'
         autoComplete='off'
-        className={classes.textField}
-        value={form.message}
-        error={validation.messageError}
-        helperText={validation.message}
-        onChange={handleChangeText('message')}
+        className={props.classes.textField}
+        value={message}
+        error={messageValidation.error}
+        helperText={messageValidation.helperText}
+        onChange={(e) => setMessage(e.target.value)}
         multiline
         rowsMax='20'
         margin='normal'
       />
-      <FormControl className={classes.formControl}>
+      <FormControl className={props.classes.formControl}>
         <InputLabel shrink htmlFor='input-silent-period'>
           Inactive period
         </InputLabel>
         <NativeSelect
-          className={classes.selectEmpty}
-          value={form.silentPeriod}
+          className={props.classes.selectEmpty}
+          value={silentPeriod}
           name='input-silent-period'
-          onChange={handleChangeSelect('silentPeriod')}
+          onChange={(e) => setSilentPeriod(parseInt(e.target.value, 10))}
         >
           <option value={90}>After 3 months</option>
           <option value={180}>After 6 months</option>
@@ -221,15 +132,15 @@ function Form(props) {
         </NativeSelect>
         <FormHelperText>Total inactive time until your message is sent to receivers' emails</FormHelperText>
       </FormControl>
-      <FormControl className={classes.formControl}>
+      <FormControl className={props.classes.formControl}>
         <InputLabel shrink htmlFor='input-reminder-interval'>
           Reminder interval
         </InputLabel>
         <NativeSelect
-          className={classes.selectEmpty}
-          value={form.reminderInterval}
+          className={props.classes.selectEmpty}
+          value={reminderInterval}
           name='input-reminder-interval'
-          onChange={handleChangeSelect('reminderInterval')}
+          onChange={(e) => setReminderInterval(parseInt(e.target.value, 10))}
         >
           <option value={15}>Every 15 days</option>
           <option value={30}>Every 30 days</option>
@@ -239,27 +150,32 @@ function Form(props) {
       <FormControlLabel
         control={
           <Switch
-            checked={form.isActive}
-            onChange={handleActivationToggle}
+            checked={isActive}
+            onChange={(e) => {
+              if (email) {
+                return setIsActive(e.target.checked);
+              }
+              openDialogInviteRegister();
+            }}
             value=''
             color='primary'
           />
         }
-        className={classes.switch}
+        className={props.classes.switch}
         label='Enable this testament'
       />
       <Button
         onClick={handleSubmit}
         variant='contained'
         color='primary'
-        className={classes.button}
+        className={props.classes.button}
         disabled={isLoading}
       >
         submit
       </Button>
       <DialogBox
         dialog={dialog}
-        onClose={handleCloseDialog}
+        onClose={() => setDialog({ title: '', open: false })}
         onOk={dialog.handleOk} />
     </form>
   );
@@ -267,13 +183,39 @@ function Form(props) {
 
 export default withStyles(styles)(Form);
 
-function validateMessage(message) {
-  return message.length >= 10 && message.length <= 800;
+function sessionStorageGetItem(key) {
+  return typeof window !== 'undefined' && window.sessionStorage.getItem(key);
 }
 
-const saveToSessionStorage = debounce((form) => {
-  if (typeof window === 'undefined' && !window.sessionStorage) {
-    return;
+function emailsValidator(emails) {
+  if (emails.length > 3) {
+    return { helperText: `${emails.length}/3, max emails allowed are 3`, error: true };
   }
-  window.sessionStorage.setItem('cloudtestament.form', JSON.stringify(form));
-}, 500);
+  if (emails.length === 0) {
+    return { helperText: `${emails.length}/3, must specify at least 1 email`, error: true };
+  }
+  return { helperText: `${emails.length}/3 emails` };
+}
+
+function messageValidator(message) {
+  if (message.length < 10) {
+    return { helperText: `${message.length}/800, message too short, min length is 10`, error: true };
+  }
+  if (message.length > 800) {
+    return { helperText: `${message.length}/800, message too long, max length is 800`, error: true };
+  }
+  return { helperText: `${message.length}/800` };
+}
+
+function useField(init, validator) {
+  const [value, setValue] = useState(init);
+  const validation = useMemo(() => validator && validator(value), [value]);
+  return [value, setValue, validation];
+}
+
+function useSessionStorage(key, value) {
+  const sessionStorageSetItem = useMemo(() => debounce(() => {
+    typeof window !== 'undefined' && window.sessionStorage.setItem(key, JSON.stringify(value));
+  }), [value]);
+  sessionStorageSetItem();
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import CreatableSelect from 'react-select/lib/Creatable';
 import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -7,14 +7,11 @@ import { validateEmail } from '../Validate';
 import { styles, reactSelectStyle } from './EmailsInput.styles';
 
 function EmailsInput(props) {
-  const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState();
-  function handleChange(emails) {
-    tryAddEmail();
-    props.onChange && props.onChange(emails);
+  function handleEmailsChange(emails) {
+    props.onEmailsChange && props.onEmailsChange(emails);
   }
-  function handleInputChange(inputValue) {
-    setInputValue(inputValue);
+  function handleEmailInputChange(emailInput) {
+    props.onEmailInputChange && props.onEmailInputChange(emailInput);
   }
   function handleKeyDown(event) {
     switch (event.key) {
@@ -22,34 +19,20 @@ function EmailsInput(props) {
       case 'Tab':
       case ' ':
       case ',':
-        tryAddEmail();
         event.preventDefault();
+        addEmail();
         break;
       default:
     }
   }
-  function tryAddEmail() {
-    if (!inputValue) {
-      return setError();
+  function addEmail() {
+    if (validateEmail(props.emailInput)) {
+      const emails = [...props.emails, createEmailOption(props.emailInput)];
+      handleEmailsChange(emails);
+      handleEmailInputChange('');
     }
-    const invalidLength = props.emails.length >= 3;
-    if (invalidLength) {
-      return setError(`${props.emails.length}/3 emails, max 3 emails`)
-    }
-    const invalidEmail = !validateEmail(inputValue);
-    if (invalidEmail) {
-      return setError(`${inputValue} is invalid email`);
-    }
-    const duplicateValue = props.emails.find(v => v.value === inputValue);
-    if (duplicateValue) {
-      return setError(`Duplicate email: ${duplicateValue.value}`);
-    }
-    setError();
-    const newValue = [...props.emails, createEmailOption(inputValue)];
-    setInputValue('');
-    props.onChange && props.onChange(newValue);
   }
-  const newStyles = error ?
+  const newStyles = props.error ?
     {
       ...reactSelectStyle,
       control: () => ({
@@ -66,10 +49,10 @@ function EmailsInput(props) {
     <FormControl className={props.classes.formControl}>
       <CreatableSelect
         id={props.id}
-        onChange={handleChange}
-        onInputChange={handleInputChange}
+        onChange={handleEmailsChange}
+        onInputChange={handleEmailInputChange}
         onKeyDown={handleKeyDown}
-        onBlur={tryAddEmail}
+        onBlur={addEmail}
         isMulti
         menuIsOpen={false}
         noOptionsMessage={() => 'Please enter valid email'}
@@ -78,10 +61,10 @@ function EmailsInput(props) {
         components={components}
         styles={newStyles}
         value={props.emails}
-        inputValue={inputValue}
+        inputValue={props.emailInput}
       />
-      <FormHelperText error={typeof error === 'string'}>
-        {error || `${props.emails.length}/3 emails, e.g. john@doe.com, ainz@gmail.com`}
+      <FormHelperText error={props.error}>
+        {props.helperText}
       </FormHelperText>
     </FormControl>
   );
