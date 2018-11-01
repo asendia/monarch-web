@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CreatableSelect from 'react-select/lib/Creatable';
 import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -7,6 +7,7 @@ import { validateEmail } from '../Validate';
 import { styles, reactSelectStyle } from './EmailsInput.styles';
 
 function EmailsInput(props) {
+  const [emailInputError, setEmailInputError] = useState(() => false);
   function handleEmailsChange(emails) {
     props.onEmailsChange && props.onEmailsChange(emails);
   }
@@ -25,20 +26,22 @@ function EmailsInput(props) {
       default:
     }
   }
-  function addEmail() {
-    if (validateEmail(props.emailInput)) {
+  // Hack since react-select clear input on blur
+  function addEmail(isFromBlur) {
+    const isValid = validateEmail(props.emailInput);
+    if (isValid) {
       const emails = [...props.emails, createEmailOption(props.emailInput)];
       handleEmailsChange(emails);
       handleEmailInputChange('');
     }
+    setEmailInputError(!isValid && props.emailInput !== '' && !isFromBlur);
   }
-  const newStyles = props.error ?
+  const newStyles = emailInputError || props.error ?
     {
       ...reactSelectStyle,
       control: () => ({
         border: 'none',
         borderBottom: '2px solid #f44336',
-        color: '#f44336',
       }),
       placeholder: (obj) => ({
         ...obj,
@@ -52,7 +55,7 @@ function EmailsInput(props) {
         onChange={handleEmailsChange}
         onInputChange={handleEmailInputChange}
         onKeyDown={handleKeyDown}
-        onBlur={addEmail}
+        onBlur={() => addEmail(true)}
         isMulti
         menuIsOpen={false}
         noOptionsMessage={() => 'Please enter valid email'}
@@ -63,8 +66,8 @@ function EmailsInput(props) {
         value={props.emails}
         inputValue={props.emailInput}
       />
-      <FormHelperText error={props.error}>
-        {props.helperText}
+      <FormHelperText error={emailInputError || props.error}>
+        {emailInputError ? `"${props.emailInput}" is invalid email` : props.helperText}
       </FormHelperText>
     </FormControl>
   );
