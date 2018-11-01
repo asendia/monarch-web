@@ -72,6 +72,7 @@ function Form(props) {
           message: trimmedMessage,
           silentPeriod,
           reminderInterval,
+          isActive,
         },
         { headers },
       );
