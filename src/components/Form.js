@@ -16,9 +16,9 @@ import debounce from 'debounce';
 import EmailsInput, { createEmailOption } from './EmailsInput';
 
 function Form(props) {
-  const [emails, setEmails, emailsValidation] = useField(() => JSON.parse(sessionStorageGetItem('emails')) || [], emailsValidator);
+  const [emails, setEmails, emailsValidation, emailsChanged] = useField(() => JSON.parse(sessionStorageGetItem('emails')) || [], emailsValidator);
   const [emailInput, setEmailInput] = useField(() => JSON.parse(sessionStorageGetItem('emailInput')) || '');
-  const [message, setMessage, messageValidation] = useField(() => JSON.parse(sessionStorageGetItem('message')) || '', messageValidator);
+  const [message, setMessage, messageValidation, messageChanged] = useField(() => JSON.parse(sessionStorageGetItem('message')) || '', messageValidator);
   const [silentPeriod, setSilentPeriod] = useField(() => parseInt(sessionStorageGetItem('silentPeriod') || 180, 10));
   const [reminderInterval, setReminderInterval] = useField(() => parseInt(sessionStorageGetItem('reminderInterval') || 30, 10));
   const [isActive, setIsActive] = useState(() => false);
@@ -29,9 +29,10 @@ function Form(props) {
   useSessionStorage('message', message);
   useSessionStorage('silentPeriod', silentPeriod);
   useSessionStorage('reminderInterval', reminderInterval);
-  let email;
-  try { email = props.netlifyIdentity.currentUser().email; } catch (err) {}
+  const currentUser = props.netlifyIdentity.currentUser();
+  const email = currentUser && currentUser.email;
   useEffect(async () => {
+    if (!email) { return; }
     try {
       const headers = await generateHeaders(props.netlifyIdentity);
       const res = await axios.get(
@@ -44,7 +45,7 @@ function Form(props) {
       setReminderInterval(res.data.reminderInterval);
       setIsActive(res.data.isActive);
     } catch (err) {}
-  }, [props.key]);
+  }, []);
   function openDialogInviteRegister() {
     return setDialog({
       open: true,
@@ -54,11 +55,11 @@ function Form(props) {
   }
   async function handleSubmit(e) {
     e.preventDefault();
-    if (email === undefined) {
-      return openDialogInviteRegister();
-    }
+    if (!email) { return openDialogInviteRegister(); }
     const error = emailsValidation.error || messageValidation.error;
     if (error) {
+      setEmails(emails);
+      setMessage(message);
       return;
     }
     setIsLoading(true);
@@ -88,8 +89,6 @@ function Form(props) {
       console.error(err);
     }
     setIsLoading(false);
-    setMessage(trimmedMessage);
-    setIsLoading(false);
   }
   return (
     <form className={props.classes.container} onSubmit={handleSubmit}>
@@ -101,7 +100,7 @@ function Form(props) {
         onEmailInputChange={(e) => {
           setEmailInput(e);
         }}
-        error={emailsValidation.error}
+        error={emailsChanged && emailsValidation.error}
         helperText={emailsValidation.helperText}
       />
       <TextField
@@ -110,7 +109,7 @@ function Form(props) {
         autoComplete='off'
         className={props.classes.textField}
         value={message}
-        error={messageValidation.error}
+        error={messageChanged && messageValidation.error}
         helperText={messageValidation.helperText}
         onChange={(e) => setMessage(e.target.value)}
         multiline
@@ -209,14 +208,25 @@ function messageValidator(message) {
 }
 
 function useField(init, validator) {
+  // Variable changed is used to make  the error hint shows only when user has *changed* the value
+  const [changed, setChanged] = useState(false);
   const [value, setValue] = useState(init);
   const validation = useMemo(() => validator && validator(value), [value]);
-  return [value, setValue, validation];
+  return [value,
+    (value) => {
+      setChanged(true);
+      setValue(value);
+    },
+    validation,
+    changed,
+  ];
 }
 
 function useSessionStorage(key, value) {
-  const sessionStorageSetItem = useMemo(() => debounce(() => {
+  const sessionStorageSetItem = useMemo(() => debounce((value) => {
     typeof window !== 'undefined' && window.sessionStorage.setItem(key, JSON.stringify(value));
-  }), [value]);
-  sessionStorageSetItem();
+  }, 500), []);
+  useEffect(() => {
+    sessionStorageSetItem(value);
+  }, [value]);
 }
