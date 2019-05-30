@@ -5,25 +5,11 @@ import LoginButton from './components/LoginButton';
 import './App.css';
 import Form from './components/Form';
 import { getParameterByName } from './QueryString';
-import { protractTestament } from './ApiCalls';
+import { protractTestament, unsubscribeTestament } from './ApiCalls';
 import UserContext from './UserContext';
 
 function App() {
-  useEffect(() => {
-    async function callApi() {
-      const mode = getParameterByName('mode');
-      const token = getParameterByName('token');
-      const id = getParameterByName('id');
-      if (token && mode && id && token.length >= 128 && mode === 'protract') {
-        try {
-          await protractTestament(id, token);
-          typeof window !== 'undefined' && window.alert('Protraction success!');
-        } catch (err) {}
-        typeof window !== 'undefined' && window.location.replace('/');
-      }
-    }
-    callApi();
-  });
+  useEmailActionsQueryParser();
   return (
     <div className='App'>
       <UserContext.Provider>
@@ -43,6 +29,34 @@ function App() {
       </UserContext.Provider>
     </div>
   );
+}
+
+function useEmailActionsQueryParser() {
+  useEffect(() => {
+    async function callApi() {
+      const mode = getParameterByName('mode');
+      const token = getParameterByName('token');
+      const id = getParameterByName('id');
+      if (token && mode && id && token.length >= 64) {
+        try {
+          switch (mode) {
+            case 'protract':
+              await protractTestament(id, token);
+              typeof window !== 'undefined' && window.alert('Protraction success!');
+              break;
+            case 'unsubscribe': {
+              const email = getParameterByName('email');
+              await unsubscribeTestament(id, token, email);
+              typeof window !== 'undefined' && window.alert('Unsubscribe success!');
+              break;
+            }
+          }
+        } catch (err) {}
+        typeof window !== 'undefined' && window.location.replace('/');
+      }
+    }
+    callApi();
+  });
 }
 
 export default App;

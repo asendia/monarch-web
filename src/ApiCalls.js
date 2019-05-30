@@ -17,3 +17,12 @@ export const protractTestament = async function protractTestament(id, token) {
   );
   return res;
 }
+
+export const unsubscribeTestament = async function unsubscribeTestament(id, token, email) {
+  const res = await axios.post(
+    `https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/unsubscribe`,
+    { id, token, email },
+    { 'Content-Type': 'application/json' }
+  );
+  return res;
+}
