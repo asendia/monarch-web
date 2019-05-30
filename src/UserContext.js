@@ -23,11 +23,11 @@ function UserContextProvider(props) {
   useEffect(() => {
     netlifyIdentity.on('init', user => {
       setIsLoading(false);
-      setUser(user);
+      setUser(typeof user === 'object' ? { ...user } : user);
     });
     netlifyIdentity.on('login', user => {
       setIsLoading(false);
-      setUser(user);
+      setUser(typeof user === 'object' ? { ...user } : user);
       netlifyIdentity.close();
     });
     netlifyIdentity.on('logout', () => {

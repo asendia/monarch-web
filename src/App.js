@@ -9,17 +9,20 @@ import { protractTestament } from './ApiCalls';
 import UserContext from './UserContext';
 
 function App() {
-  useEffect(async () => {
-    const mode = getParameterByName('mode');
-    const token = getParameterByName('token');
-    const id = getParameterByName('id');
-    if (token && mode && id && token.length >= 128 && mode === 'protract') {
-      try {
-        await protractTestament(id, token);
-        typeof window !== 'undefined' && window.alert('Protraction success!');
-      } catch (err) {}
-      typeof window !== 'undefined' && window.location.replace('/');
+  useEffect(() => {
+    async function callApi() {
+      const mode = getParameterByName('mode');
+      const token = getParameterByName('token');
+      const id = getParameterByName('id');
+      if (token && mode && id && token.length >= 128 && mode === 'protract') {
+        try {
+          await protractTestament(id, token);
+          typeof window !== 'undefined' && window.alert('Protraction success!');
+        } catch (err) {}
+        typeof window !== 'undefined' && window.location.replace('/');
+      }
     }
+    callApi();
   });
   return (
     <div className='App'>

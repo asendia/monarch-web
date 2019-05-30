@@ -31,20 +31,23 @@ function Form(props) {
   useSessionStorage('reminderInterval', reminderInterval);
   const currentUser = props.netlifyIdentity.currentUser();
   const email = currentUser && currentUser.email;
-  useEffect(async () => {
+  useEffect(() => {
     if (!email) { return; }
-    try {
-      const headers = await generateHeaders(props.netlifyIdentity);
-      const res = await axios.get(
-        'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/retrieve',
-        { headers },
-      );
-      setEmails(res.data.emails.split(', ').map(createEmailOption));
-      setMessage(res.data.message);
-      setSilentPeriod(res.data.silentPeriod);
-      setReminderInterval(res.data.reminderInterval);
-      setIsActive(res.data.isActive);
-    } catch (err) {}
+    async function fetchData() {
+      try {
+        const headers = await generateHeaders(props.netlifyIdentity);
+        const res = await axios.get(
+          'https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com/default/retrieve',
+          { headers },
+        );
+        setEmails(res.data.emails.split(', ').map(createEmailOption));
+        setMessage(res.data.message);
+        setSilentPeriod(res.data.silentPeriod);
+        setReminderInterval(res.data.reminderInterval);
+        setIsActive(res.data.isActive);
+      } catch (err) {}
+    }
+    fetchData();
   }, []);
   function openDialogInviteRegister() {
     return setDialog({
@@ -94,7 +97,7 @@ function Form(props) {
     <form className={props.classes.container} onSubmit={handleSubmit}>
       <EmailsInput
         id='emails'
-        emails={emails}
+        emails={emails || []}
         emailInput={emailInput}
         onEmailsChange={setEmails}
         onEmailInputChange={(e) => {
@@ -188,6 +191,7 @@ function sessionStorageGetItem(key) {
 }
 
 function emailsValidator(emails) {
+  emails = emails || [];
   if (emails.length > 3) {
     return { helperText: `${emails.length}/3, max emails allowed are 3`, error: true };
   }
@@ -211,7 +215,7 @@ function useField(init, validator) {
   // Variable changed is used to make  the error hint shows only when user has *changed* the value
   const [changed, setChanged] = useState(false);
   const [value, setValue] = useState(init);
-  const validation = useMemo(() => validator && validator(value), [value]);
+  const validation = useMemo(() => validator && validator(value), [value, validator]);
   return [value,
     (value) => {
       setChanged(true);
