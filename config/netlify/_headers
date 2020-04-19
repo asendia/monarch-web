@@ -1,7 +1,7 @@
 /service-worker.js
   Cache-Control: no-cache, max-age=0
 /
-  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-5As4+3YpY62+l38PsxCEkjB1R4YtyktBtRScTJ3fyLU='; manifest-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-xgnqD2LQQEMQcOQJk644ffffJ9gTZeoe8zVM2aKxWkU='; manifest-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://x46g8u90qd.execute-api.ap-southeast-1.amazonaws.com
   Referrer-Policy: strict-origin-when-cross-origin
   Feature-Policy: geolocation 'none'; microphone 'none'; camera 'none'; fullscreen 'none'; payment 'none'; sync-xhr 'none'
   X-XSS-Protection: 1; mode=block
