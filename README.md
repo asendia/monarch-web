@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/4620cb4c-3705-45a8-bd78-ce43087deafd/deploy-status)](https://app.netlify.com/sites/cloudtestament/deploys)
+
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 Below you will find some information on how to perform common tasks.<br>
