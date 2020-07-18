@@ -48,7 +48,7 @@ function Form(props) {
       } catch (err) {}
     }
     fetchData();
-  }, []);
+  }, [email, props.netlifyIdentity, setEmails, setMessage, setReminderInterval, setSilentPeriod]);
   function openDialogInviteRegister() {
     return setDialog({
       open: true,
@@ -229,8 +229,8 @@ function useField(init, validator) {
 function useSessionStorage(key, value) {
   const sessionStorageSetItem = useMemo(() => debounce((value) => {
     typeof window !== 'undefined' && window.sessionStorage.setItem(key, JSON.stringify(value));
-  }, 500), []);
+  }, 500), [key]);
   useEffect(() => {
     sessionStorageSetItem(value);
-  }, [value]);
+  }, [value, sessionStorageSetItem]);
 }

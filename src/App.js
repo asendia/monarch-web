@@ -50,6 +50,9 @@ function useEmailActionsQueryParser() {
               typeof window !== 'undefined' && window.alert('Unsubscribe success!');
               break;
             }
+            default:
+              window.alert('Invalid mode.');
+              break;
           }
         } catch (err) {}
         typeof window !== 'undefined' && window.location.replace('/');
