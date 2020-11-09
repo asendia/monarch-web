@@ -48,7 +48,6 @@ function Form(props) {
       } catch (err) {}
     }
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   function openDialogInviteRegister() {
     return setDialog({
