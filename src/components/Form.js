@@ -48,7 +48,8 @@ function Form(props) {
       } catch (err) {}
     }
     fetchData();
-  }, [email, props.netlifyIdentity, setEmails, setMessage, setReminderInterval, setSilentPeriod]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   function openDialogInviteRegister() {
     return setDialog({
       open: true,
