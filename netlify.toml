@@ -3,12 +3,6 @@
   command = "yarn build"
   environment = { INLINE_RUNTIME_CHUNK = "false", REACT_APP_DEPLOY_ENV = "production" }
 
-[[redirects]]
-  from = "https://cloudtestament.netlify.com/*"
-  to = "https://www.cloudtestament.com/:splat"
-  status = 301
-  force = true
-
 [[headers]]
   for = "/service-worker.js"
   [headers.values]
