@@ -17,3 +17,14 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
+
+[[redirects]]
+  from = "https://cloudtestament.com"
+  to = "https://warisin.com"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.cloudtestament.com"
+  to = "https://warisin.com"
+  status = 301

@@ -53,7 +53,7 @@ function Form(props) {
     return setDialog({
       open: true,
       title: 'Please login',
-      description: 'You must login first in order to try cloudtestament',
+      description: 'You need to login first in order to try Warisin',
     });
   }
   async function handleSubmit(e) {
