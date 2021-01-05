@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@material-ui/core": "^4.11.0",
-    "axios": "^0.21.0",
+    "axios": "^0.21.1",
     "debounce": "^1.2.0",
     "netlify-identity-widget": "^1.9.1",
     "react": "^17.0.1",
