@@ -28,3 +28,9 @@
   from = "https://www.cloudtestament.com"
   to = "https://warisin.com"
   status = 301
+
+[[redirects]]
+  from = "/pesangon/*"
+  to = "https://pesangon.netlify.app/pesangon/:splat"
+  status = 200
+  force = true
